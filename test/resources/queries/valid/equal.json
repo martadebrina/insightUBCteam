@@ -1,0 +1,23 @@
+{
+	"title": "SELECT dept, avg WHERE avg = 98",
+	"input": {
+		"WHERE": {
+			"EQ": {
+				"sections_avg": 98
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"sections_dept",
+				"sections_avg",
+				"sections_year",
+				"sections_pass",
+				"sections_fail",
+				"sections_audit"
+			],
+			"ORDER": "sections_dept"
+		}
+	},
+	"errorExpected": false,
+	"expected": [{"sections_dept":"crwr","sections_avg":98,"sections_year":2013,"sections_pass":1,"sections_fail":0,"sections_audit":0},{"sections_dept":"crwr","sections_avg":98,"sections_year":2013,"sections_pass":1,"sections_fail":0,"sections_audit":0}]
+}

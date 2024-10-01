@@ -1,0 +1,29 @@
+{
+	"title": "or comparator",
+	"input": {
+        "WHERE": {
+          "OR": [
+            {
+              "EQ": {
+                "sections_avg": 97
+              }
+            },
+            {
+              "IS": {
+                "sections_instructor": "affleck*"
+              }
+            }
+          ]
+        },
+        "OPTIONS": {
+          "COLUMNS": [
+            "sections_dept",
+            "sections_avg",
+            "sections_instructor"
+          ],
+          "ORDER": "sections_avg"
+        }
+      },
+	"errorExpected": false,
+	"expected": [{"sections_dept":"phys","sections_avg":71.33,"sections_instructor":"affleck, ian keith"},{"sections_dept":"phys","sections_avg":78.95,"sections_instructor":"affleck, ian keith;bonn, douglas andrew"},{"sections_dept":"phys","sections_avg":79.06,"sections_instructor":"affleck, ian keith"},{"sections_dept":"phys","sections_avg":79.09,"sections_instructor":"affleck, ian keith"},{"sections_dept":"nurs","sections_avg":79.31,"sections_instructor":"affleck, frances;esson, lynne;foster, paula;jackson, cathryn;marshall, helga;taverner, tarnia"},{"sections_dept":"phys","sections_avg":79.66,"sections_instructor":"affleck, ian keith;bonn, douglas andrew"},{"sections_dept":"phys","sections_avg":79.76,"sections_instructor":"affleck, ian keith;bonn, douglas andrew"},{"sections_dept":"phys","sections_avg":79.84,"sections_instructor":"affleck, ian keith;bonn, douglas andrew"},{"sections_dept":"phys","sections_avg":79.89,"sections_instructor":"affleck, ian keith;bonn, douglas andrew"},{"sections_dept":"phys","sections_avg":80.43,"sections_instructor":"affleck, ian keith"},{"sections_dept":"nurs","sections_avg":80.79,"sections_instructor":"affleck, frances;jackson, cathryn;marshall, helga;oliffe, john;valkenier, beverley"},{"sections_dept":"nurs","sections_avg":80.87,"sections_instructor":"affleck, frances;esson, lynne;jackson, cathryn;mann, dalbir;marshall, helga;mislang, jonathan;taverner, tarnia;valkenier, beverley"},{"sections_dept":"nurs","sections_avg":81.37,"sections_instructor":"affleck, frances;oliffe, john"},{"sections_dept":"nurs","sections_avg":81.65,"sections_instructor":"affleck, frances;esson, lynne;foster, paula;jackson, cathryn;mann, dalbir;marshall, helga;mislang, jonathan;polyhronopoulos, nancy;taverner, tarnia"},{"sections_dept":"nurs","sections_avg":81.88,"sections_instructor":"affleck, frances;esson, lynne;jackson, cathryn;mislang, jonathan;oliffe, john;rea, gail;valkenier, beverley"},{"sections_dept":"nurs","sections_avg":82.05,"sections_instructor":"affleck, frances;esson, lynne;foster, paula;jackson, cathryn;marshall, helga;taverner, tarnia"},{"sections_dept":"phys","sections_avg":83.22,"sections_instructor":"affleck, ian keith"},{"sections_dept":"nurs","sections_avg":84.13,"sections_instructor":"affleck, frances;esson, lynne;foster, paula;jackson, cathryn;mann, dalbir;mislang, jonathan;taverner, tarnia;valkenier, beverley"},{"sections_dept":"nurs","sections_avg":85.02,"sections_instructor":"affleck, frances;foster, paula;jackson, cathryn;jetha, farah;mcburney, sheila mary;rea, gail;segaric, cheryl"},{"sections_dept":"nurs","sections_avg":85.4,"sections_instructor":"affleck, frances;esson, lynne;foster, paula;jackson, cathryn;mann, dalbir;marshall, helga;mislang, jonathan;polyhronopoulos, nancy;taverner, tarnia"},{"sections_dept":"nurs","sections_avg":87.02,"sections_instructor":"affleck, frances;boschma, geertje;brown, helen jean;foster, paula;jackson, cathryn;mcburney, sheila mary;rea, gail;thorne, sally"},{"sections_dept":"phys","sections_avg":90.42,"sections_instructor":"affleck, ian keith"},{"sections_dept":"phys","sections_avg":92.58,"sections_instructor":"affleck, ian keith"},{"sections_dept":"psyc","sections_avg":97,"sections_instructor":""},{"sections_dept":"epse","sections_avg":97,"sections_instructor":"amaral, deborah;ford, laurie"},{"sections_dept":"crwr","sections_avg":97,"sections_instructor":"campbell, deborah"}]
+}

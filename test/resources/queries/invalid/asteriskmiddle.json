@@ -1,0 +1,19 @@
+{
+    "title": "SELECT dept, instructor WHERE instructor contains asterisk in the middle",
+    "input": {
+        "WHERE": {
+            "IS": {
+                "sections_instructor": "Jo*n"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "sections_dept",
+                "sections_instructor"
+            ]
+        }
+    },
+    "errorExpected": true,
+    "expected": "InsightError"
+}
+

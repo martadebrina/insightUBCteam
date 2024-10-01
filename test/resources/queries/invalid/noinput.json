@@ -1,0 +1,6 @@
+{
+	"title": "no input",
+	"input": {},
+	"errorExpected": true,
+	"expected": "InsightError"
+}
