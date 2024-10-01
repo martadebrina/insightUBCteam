@@ -54,8 +54,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.addDataset("", sections, InsightDatasetKind.Sections);
 				expect.fail("Should not accept an empty dataset id");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -63,8 +63,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.addDataset("_DEF", sections, InsightDatasetKind.Sections);
 				expect.fail("should reject id starts with _");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -72,8 +72,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.addDataset("D_EF", sections, InsightDatasetKind.Sections);
 				expect.fail("should reject id with _ in the middle");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -90,8 +90,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.addDataset("  ", sections, InsightDatasetKind.Sections);
 				expect.fail("should reject id with only whitespace");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -99,17 +99,17 @@ describe("InsightFacade", function () {
 			try {
 				const set1 = await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
 				expect(set1).to.have.members(["CPSC310"]);
-			} catch (err) {
+			} catch (_err) {
 				expect.fail("should not fail");
 			}
 		});
 
 		it("should reject dataset with no valid course", async function () {
 			try {
-				const set1 = await facade.addDataset("CPSC313", sections1, InsightDatasetKind.Sections);
+				await facade.addDataset("CPSC313", sections1, InsightDatasetKind.Sections);
 				expect.fail("should reject dataset with no valid course");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 	});
@@ -131,8 +131,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.removeDataset("");
 				expect.fail("Should not accept an empty dataset id");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -140,8 +140,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.removeDataset("_DEF");
 				expect.fail("should reject id starts with _");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -149,8 +149,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.removeDataset("D_EF");
 				expect.fail("should reject id with _ in the middle");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -158,8 +158,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.removeDataset("DEF_");
 				expect.fail("should reject id with _ in the end");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -167,8 +167,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.removeDataset("  ");
 				expect.fail("should reject id with only whitespace");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
 
@@ -177,7 +177,7 @@ describe("InsightFacade", function () {
 				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
 				const set = await facade.removeDataset("CPSC310");
 				expect(set).to.equal("CPSC310");
-			} catch (err) {
+			} catch (_err) {
 				expect.fail("should removed successfully");
 			}
 		});
@@ -187,8 +187,8 @@ describe("InsightFacade", function () {
 				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
 				await facade.removeDataset("CPSC");
 				expect.fail("cannot find id");
-			} catch (err) {
-				expect(err).to.be.instanceOf(NotFoundError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(NotFoundError);
 			}
 		});
 
@@ -196,8 +196,8 @@ describe("InsightFacade", function () {
 			try {
 				await facade.removeDataset("CPSC");
 				expect.fail("cannot remove from empty dataset");
-			} catch (err) {
-				expect(err).to.be.instanceOf(NotFoundError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(NotFoundError);
 			}
 		});
 
@@ -207,8 +207,8 @@ describe("InsightFacade", function () {
 				await facade.removeDataset("CPSC310");
 				await facade.removeDataset("CPSC310");
 				expect.fail("should not remove twice");
-			} catch (err) {
-				expect(err).to.be.instanceOf(NotFoundError);
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(NotFoundError);
 			}
 		});
 
@@ -220,7 +220,7 @@ describe("InsightFacade", function () {
 				expect(set).to.equal("CPSC310");
 				const set1 = await facade.removeDataset("CPSC313");
 				expect(set1).to.equal("CPSC313");
-			} catch (err) {
+			} catch (_err) {
 				expect.fail("should removed successfully");
 			}
 		});
@@ -243,7 +243,7 @@ describe("InsightFacade", function () {
 			try {
 				const set = await facade.listDatasets();
 				expect(set).to.deep.equal([]);
-			} catch (err) {
+			} catch (_err) {
 				expect.fail("Should not fail");
 			}
 		});
@@ -259,7 +259,7 @@ describe("InsightFacade", function () {
 						numRows: 64612,
 					},
 				]);
-			} catch (err) {
+			} catch (_err) {
 				expect.fail("Should not fail");
 			}
 		});
@@ -281,7 +281,7 @@ describe("InsightFacade", function () {
 						numRows: 64612,
 					},
 				]);
-			} catch (err) {
+			} catch (_err) {
 				expect.fail("Should not fail");
 			}
 		});
@@ -311,14 +311,14 @@ describe("InsightFacade", function () {
 				}
 				expect(result).to.deep.equal(expected);
 				expect(input).to.be.instanceOf(Object);
-			} catch (err) {
+			} catch (_err) {
 				if (!errorExpected) {
-					expect.fail(`performQuery threw unexpected error: ${err}`);
+					expect.fail(`performQuery threw unexpected error: ${_err}`);
 				}
 				if (expected === "InsightError") {
-					expect(err).to.be.instanceOf(InsightError);
+					expect(_err).to.be.instanceOf(InsightError);
 				} else if (expected === "ResultTooLargeError") {
-					expect(err).to.be.instanceOf(ResultTooLargeError);
+					expect(_err).to.be.instanceOf(ResultTooLargeError);
 				} else {
 					expect.fail("should not reach here");
 				}
@@ -337,8 +337,8 @@ describe("InsightFacade", function () {
 
 			try {
 				await Promise.all(loadDatasetPromises);
-			} catch (err) {
-				throw new Error(`In PerformQuery Before hook, dataset(s) failed to be added. \n${err}`);
+			} catch (_err) {
+				throw new Error(`In PerformQuery Before hook, dataset(s) failed to be added. \n${_err}`);
 			}
 		});
 
