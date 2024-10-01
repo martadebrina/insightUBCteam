@@ -13,7 +13,6 @@ export default class InsightFacade implements IInsightFacade {
 	private datasets: Record<string, InsightDataset> = {};
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		// TODO: Remove this once you implement the methods!
 
 		// reject invalid params and dataset already exist
 		if (id === "" || id === " " || id.includes("_") || this.datasets[id]) {

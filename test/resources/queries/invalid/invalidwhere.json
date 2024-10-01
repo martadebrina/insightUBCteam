@@ -1,0 +1,23 @@
+{
+	"title": "invalid comparator",
+	"input": {
+		"WHERE": {
+			"EQ": {
+				"sections_dept": "math"
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"sections_dept",
+				"sections_avg",
+				"sections_year",
+				"sections_pass",
+				"sections_fail",
+				"sections_audit"
+			],
+			"ORDER": "sections_dept"
+		}
+	},
+	"errorExpected": true,
+	"expected": "InsightError"
+}

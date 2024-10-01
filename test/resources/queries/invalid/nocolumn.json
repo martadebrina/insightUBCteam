@@ -1,0 +1,15 @@
+{
+	"title": "no column",
+	"input": {
+		"WHERE": {
+			"EQ": {
+				"sections_avg": 100
+			}
+		},
+		"OPTIONS": {
+			"ORDER": "sections_dept"
+		}
+	},
+	"errorExpected": true,
+	"expected": "InsightError"
+}

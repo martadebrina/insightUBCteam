@@ -1,0 +1,12 @@
+{
+    "title": "SELECT with missing OPTIONS field",
+    "input": {
+        "WHERE": {
+            "GT": {
+                "sections_avg": 85
+            }
+        }
+    },
+    "errorExpected": true,
+    "expected": "InsightError"
+}

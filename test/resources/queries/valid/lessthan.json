@@ -1,0 +1,23 @@
+{
+	"title": "SELECT dept, avg WHERE avg < 25",
+	"input": {
+		"WHERE": {
+			"LT": {
+				"sections_avg": 25
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": [
+				"sections_dept",
+				"sections_avg",
+				"sections_instructor",
+				"sections_uuid",
+				"sections_id",
+				"sections_title"
+			],
+			"ORDER": "sections_avg"
+		}
+	},
+	"errorExpected": false,
+	"expected": [{"sections_dept":"lfs","sections_avg":0,"sections_instructor":"","sections_uuid":"56403","sections_id":"100","sections_title":"in land food com"},{"sections_dept":"lfs","sections_avg":0,"sections_instructor":"","sections_uuid":"56402","sections_id":"100","sections_title":"in land food com"},{"sections_dept":"frst","sections_avg":0,"sections_instructor":"","sections_uuid":"89536","sections_id":"202","sections_title":"forest ecology"},{"sections_dept":"wood","sections_avg":1,"sections_instructor":"","sections_uuid":"49835","sections_id":"475","sections_title":"prpty,ident&uses"},{"sections_dept":"busi","sections_avg":4,"sections_instructor":"","sections_uuid":"16428","sections_id":"330","sections_title":"found re apprai"},{"sections_dept":"busi","sections_avg":4,"sections_instructor":"","sections_uuid":"16427","sections_id":"330","sections_title":"found re apprai"},{"sections_dept":"fopr","sections_avg":4.5,"sections_instructor":"bendickson, dennis","sections_uuid":"84769","sections_id":"362","sections_title":"sustnbt&frst ops"}]
+}
