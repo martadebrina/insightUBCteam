@@ -1,6 +1,8 @@
 import { IInsightFacade, InsightDataset, InsightDatasetKind, InsightResult } from "./IInsightFacade";
 import { InsightError } from "./IInsightFacade";
 import JSZip from "jszip";
+import * as fs from "fs-extra";
+import * as path from "path";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -13,26 +15,49 @@ export default class InsightFacade implements IInsightFacade {
 	private datasets: Record<string, InsightDataset> = {};
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
+		// Validate the parameters
+		console.log(`Adding dataset with ID: ${id}`);
 
-		// reject invalid params and dataset already exist
-		if (id === "" || id === " " || id.includes("_") || this.datasets[id]) {
-			throw new InsightError();
+		if (!id || typeof id !== "string" || id.trim() === "" || id.includes("_")) {
+			console.error("Invalid dataset ID provided.");
+			return Promise.reject(new InsightError("Invalid dataset ID."));
 		}
 
-		const validSections = await this.getValidSections(content);
-
-		// no valid section in the zip file
-		if (validSections.length === 0) {
-			throw new InsightError();
+		if (this.datasets[id]) {
+			console.error("Dataset with the same ID already exists.");
+			return Promise.reject(new InsightError("Dataset with the same ID already exists."));
 		}
-		//store valid section back to datasets
-		this.datasets[id] = {
-			id,
-			kind,
-			numRows: validSections.length,
-		};
-		// return the valid section
-		return Object.keys(this.datasets);
+
+		try {
+			// Call the helper function to get valid sections asynchronously
+			console.log("Getting valid sections from the provided content.");
+			const validSections = await this.getValidSections(content);
+
+			// No valid section in the zip file
+			if (validSections.length === 0) {
+				console.error("No valid sections found in the dataset.");
+				throw new InsightError("No valid sections found in the dataset.");
+			}
+
+			// Store valid sections back to datasets
+			console.log(`Storing dataset with ID: ${id}`);
+			this.datasets[id] = {
+				id,
+				kind,
+				numRows: validSections.length,
+			};
+
+			// Return the updated list of dataset IDs
+			console.log("Dataset added successfully. Returning updated list of dataset IDs.");
+			return Promise.resolve(Object.keys(this.datasets));
+		} catch (err) {
+			console.error("Failed to add dataset.");
+			return Promise.reject(new InsightError("Failed to add dataset."));
+		}
+	}
+
+	getValidSections(content: string) {
+		return [];
 	}
 
 	public async removeDataset(id: string): Promise<string> {
@@ -47,54 +72,7 @@ export default class InsightFacade implements IInsightFacade {
 
 	public async listDatasets(): Promise<InsightDataset[]> {
 		// TODO: Remove this once you implement the methods!
-		throw new Error(`InsightFacadeImpl::listDatasets is unimplemented!`);
+		return Object.values(this.datasets);
 	}
 
-	// helper functions
-
-	private async getValidSections(content: string): Promise<any[]> {
-		const unzip = await this.loadZip(content);
-		const jsonFilesContent = await this.extractJsonFiles(unzip);
-		return this.parseJsonFiles(jsonFilesContent);
-	}
-
-	private async loadZip(content: string): Promise<JSZip> {
-		const newZip = new JSZip();
-		try {
-			return await newZip.loadAsync(content, { base64: true });
-		} catch {
-			throw new InsightError();
-		}
-	}
-
-	private async extractJsonFiles(unzip: JSZip): Promise<string[]> {
-		const jsonFilePromises = Object.keys(unzip.files)
-			.filter((f) => f.endsWith(".json"))
-			.map(async (f) => unzip.files[f].async("string"));
-
-		try {
-			return await Promise.all(jsonFilePromises);
-		} catch {
-			throw new InsightError();
-		}
-	}
-
-	private parseJsonFiles(jsonFilesContent: string[]): any[] {
-		const validSections: any[] = [];
-		for (const fileContent of jsonFilesContent) {
-			try {
-				const parsedFile = JSON.parse(fileContent);
-				if (Array.isArray(parsedFile)) {
-					for (const section of parsedFile) {
-						if (section && typeof section === "object") {
-							validSections.push(section);
-						}
-					}
-				}
-			} catch {
-				throw new InsightError();
-			}
-		}
-		return validSections;
-	}
 }
