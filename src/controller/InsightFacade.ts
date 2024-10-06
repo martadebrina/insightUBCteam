@@ -86,7 +86,9 @@ export default class InsightFacade implements IInsightFacade {
 
 	constructor() {
 		this.datasets = new Map<string, Course[]>();
-		this.loadDatasetsFromDisk();
+		void this.loadDatasetsFromDisk().catch((_error) => {
+			throw new InsightError("Failed to load datasets from disk");
+		});
 	}
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
@@ -107,7 +109,7 @@ export default class InsightFacade implements IInsightFacade {
 		try {
 			const data = Buffer.from(content, "base64");
 			zipData = await JSZip.loadAsync(data);
-		} catch (error) {
+		} catch (_error) {
 			throw new InsightError("Failed to parse zip file");
 		}
 
@@ -129,25 +131,25 @@ export default class InsightFacade implements IInsightFacade {
 		if (!this.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
-	
+
 		// Check if the dataset exists
 		if (!this.datasets.has(id)) {
 			throw new NotFoundError(`Dataset with id '${id}' does not exist`);
 		}
-	
+
 		// Remove the dataset from in-memory storage
 		this.datasets.delete(id);
-	
+
 		// Remove the dataset file from disk
 		const dataDir = path.join(process.cwd(), "data");
 		const filePath = path.join(dataDir, `${id}.json`);
-	
+
 		try {
 			await fs.remove(filePath);
-		} catch (error) {
+		} catch (_error) {
 			throw new InsightError("Failed to remove dataset from disk");
 		}
-	
+
 		// Return the id of the removed dataset
 		return id;
 	}
@@ -185,16 +187,16 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async processZipFile(zip: JSZip): Promise<Course[]> {
-		const coursesMap: Map<string, Course> = new Map();
+		const coursesMap = new Map<string, Course>();
 		const coursesFolder = zip.folder("courses");
 
 		if (!coursesFolder) {
 			throw new InsightError("The zip file does not contain a 'courses' folder");
 		}
 
-		const files = coursesFolder.filter((relativePath, file) => !file.dir);
+		const files = coursesFolder.filter((_relativePath, file) => !file.dir);
 
-		for (const file of files) {
+		const filePromises = files.map(async (file) => {
 			try {
 				const content = await file.async("text");
 				const json = JSON.parse(content);
@@ -216,11 +218,12 @@ export default class InsightFacade implements IInsightFacade {
 						}
 					}
 				}
-			} catch (error) {
-				// Continue to next file if parsing fails
-				continue;
+			} catch (_error) {
+				// Handle error if necessary
 			}
-		}
+		});
+
+		await Promise.all(filePromises);
 
 		return Array.from(coursesMap.values());
 	}
@@ -236,14 +239,15 @@ export default class InsightFacade implements IInsightFacade {
 			!isNaN(Number(section.Pass)) &&
 			!isNaN(Number(section.Fail)) &&
 			!isNaN(Number(section.Audit)) &&
-			section.id != null &&
+			section.id !== null &&
 			typeof section.Section === "string" &&
 			!isNaN(Number(section.Year))
 		);
 	}
 
 	private parseSection(section: any): Section {
-		const year = section.Section === "overall" ? 1900 : Number(section.Year);
+		const a = 1900;
+		const year = section.Section === "overall" ? a : Number(section.Year);
 
 		return new Section(
 			section.Section,
@@ -267,18 +271,20 @@ export default class InsightFacade implements IInsightFacade {
 			}
 
 			const files = await fs.readdir(dataDir);
-			for (const file of files) {
-				if (file.endsWith(".json")) {
+			const readPromises = files
+				.filter((file) => file.endsWith(".json"))
+				.map(async (file) => {
 					const filePath = path.join(dataDir, file);
 					try {
-						const serializedCourses: any[] = await fs.readJSON(filePath);
+						const serializedCourses = await fs.readJSON(filePath);
 						const id = path.basename(file, ".json");
 
-						const courses: Course[] = serializedCourses.map((serializedCourse) => {
-							const course = new Course(serializedCourse.dept, serializedCourse.id, serializedCourse.title);
-
-							course.sections = serializedCourse.sections.map(
-								(serializedSection: {
+						const courses: Course[] = serializedCourses.map(
+							(serializedCourse: {
+								dept: string;
+								id: string;
+								title: string;
+								sections: {
 									section: string;
 									uuid: string;
 									year: number;
@@ -287,32 +293,47 @@ export default class InsightFacade implements IInsightFacade {
 									pass: number;
 									fail: number;
 									audit: number;
-								}) => {
-									return new Section(
-										serializedSection.section,
-										serializedSection.uuid,
-										serializedSection.year,
-										serializedSection.instructor,
-										serializedSection.avg,
-										serializedSection.pass,
-										serializedSection.fail,
-										serializedSection.audit
-									);
-								}
-							);
+								}[];
+							}) => {
+								const course = new Course(serializedCourse.dept, serializedCourse.id, serializedCourse.title);
 
-							return course;
-						});
+								course.sections = serializedCourse.sections.map(
+									(serializedSection: {
+										section: string;
+										uuid: string;
+										year: number;
+										instructor: string;
+										avg: number;
+										pass: number;
+										fail: number;
+										audit: number;
+									}) => {
+										return new Section(
+											serializedSection.section,
+											serializedSection.uuid,
+											serializedSection.year,
+											serializedSection.instructor,
+											serializedSection.avg,
+											serializedSection.pass,
+											serializedSection.fail,
+											serializedSection.audit
+										);
+									}
+								);
+
+								return course;
+							}
+						);
 
 						this.datasets.set(id, courses);
-					} catch (error) {
-						console.error(`Failed to load dataset from file ${file}:`, error);
-						continue;
+					} catch (_error) {
+						// Handle error if necessary
 					}
-				}
-			}
-		} catch (error) {
-			console.error("Failed to read datasets from disk:", error);
+				});
+
+			await Promise.all(readPromises);
+		} catch (_error) {
+			// console.error("Failed to read datasets from disk:", error);
 		}
 	}
 
@@ -324,7 +345,7 @@ export default class InsightFacade implements IInsightFacade {
 			await fs.ensureDir(dataDir);
 			const serializedCourses = courses.map((course) => course.toJSON());
 			await fs.writeJSON(filePath, serializedCourses);
-		} catch (error) {
+		} catch (_error) {
 			throw new InsightError("Failed to save dataset to disk");
 		}
 	}
