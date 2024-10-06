@@ -1,4 +1,4 @@
-import { IInsightFacade, InsightDataset, InsightDatasetKind, InsightResult } from "./IInsightFacade";
+import { IInsightFacade, InsightDataset, InsightDatasetKind, InsightResult, NotFoundError } from "./IInsightFacade";
 import { InsightError } from "./IInsightFacade";
 import JSZip from "jszip";
 import * as fs from "fs-extra";
@@ -9,60 +9,147 @@ import * as path from "path";
  * Method documentation is in IInsightFacade
  *
  */
-export default class InsightFacade implements IInsightFacade {
-	//datasets storage
 
-	private datasets: Record<string, InsightDataset> = {};
+export class Section {
+	public section: string;
+	public uuid: string;
+	public year: number;
+	public instructor: string;
+	public avg: number;
+	public pass: number;
+	public fail: number;
+	public audit: number;
 
-	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		// Validate the parameters
-		console.log(`Adding dataset with ID: ${id}`);
-
-		if (!id || typeof id !== "string" || id.trim() === "" || id.includes("_")) {
-			console.error("Invalid dataset ID provided.");
-			return Promise.reject(new InsightError("Invalid dataset ID."));
-		}
-
-		if (this.datasets[id]) {
-			console.error("Dataset with the same ID already exists.");
-			return Promise.reject(new InsightError("Dataset with the same ID already exists."));
-		}
-
-		try {
-			// Call the helper function to get valid sections asynchronously
-			console.log("Getting valid sections from the provided content.");
-			const validSections = await this.getValidSections(content);
-
-			// No valid section in the zip file
-			if (validSections.length === 0) {
-				console.error("No valid sections found in the dataset.");
-				throw new InsightError("No valid sections found in the dataset.");
-			}
-
-			// Store valid sections back to datasets
-			console.log(`Storing dataset with ID: ${id}`);
-			this.datasets[id] = {
-				id,
-				kind,
-				numRows: validSections.length,
-			};
-
-			// Return the updated list of dataset IDs
-			console.log("Dataset added successfully. Returning updated list of dataset IDs.");
-			return Promise.resolve(Object.keys(this.datasets));
-		} catch (err) {
-			console.error("Failed to add dataset.");
-			return Promise.reject(new InsightError("Failed to add dataset."));
-		}
+	constructor(
+		section: string,
+		uuid: string,
+		year: number,
+		instructor: string,
+		avg: number,
+		pass: number,
+		fail: number,
+		audit: number
+	) {
+		this.section = section;
+		this.uuid = uuid;
+		this.year = year;
+		this.instructor = instructor;
+		this.avg = avg;
+		this.pass = pass;
+		this.fail = fail;
+		this.audit = audit;
 	}
 
-	getValidSections(content: string) {
-		return [];
+	public toJSON(): any {
+		return {
+			section: this.section,
+			uuid: this.uuid,
+			year: this.year,
+			instructor: this.instructor,
+			avg: this.avg,
+			pass: this.pass,
+			fail: this.fail,
+			audit: this.audit,
+		};
+	}
+}
+
+class Course {
+	public dept: string;
+	public id: string;
+	public title: string;
+	public sections: Section[];
+
+	constructor(dept: string, id: string, title: string) {
+		this.dept = dept;
+		this.id = id;
+		this.title = title;
+		this.sections = [];
+	}
+
+	public addSection(section: Section): void {
+		this.sections.push(section);
+	}
+
+	public toJSON(): any {
+		return {
+			dept: this.dept,
+			id: this.id,
+			title: this.title,
+			sections: this.sections.map((section) => section.toJSON()),
+		};
+	}
+}
+
+export default class InsightFacade implements IInsightFacade {
+	private datasets: Map<string, Course[]>;
+
+	constructor() {
+		this.datasets = new Map<string, Course[]>();
+		this.loadDatasetsFromDisk();
+	}
+
+	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
+		// Validate the id
+		if (!this.isValidId(id)) {
+			throw new InsightError("Invalid id");
+		}
+
+		if (kind !== InsightDatasetKind.Sections) {
+			throw new InsightError("Invalid dataset kind");
+		}
+
+		if (this.datasets.has(id)) {
+			throw new InsightError(`Dataset with id '${id}' already exists`);
+		}
+
+		let zipData: JSZip;
+		try {
+			const data = Buffer.from(content, "base64");
+			zipData = await JSZip.loadAsync(data);
+		} catch (error) {
+			throw new InsightError("Failed to parse zip file");
+		}
+
+		const courses = await this.processZipFile(zipData);
+
+		if (courses.length === 0) {
+			throw new InsightError("No valid courses found in dataset");
+		}
+
+		await this.saveDatasetToDisk(id, courses);
+		this.datasets.set(id, courses);
+
+		return Array.from(this.datasets.keys());
 	}
 
 	public async removeDataset(id: string): Promise<string> {
 		// TODO: Remove this once you implement the methods!
-		throw new Error(`InsightFacadeImpl::removeDataset() is unimplemented! - id=${id};`);
+		// Validate the id
+		if (!this.isValidId(id)) {
+			throw new InsightError("Invalid id");
+		}
+	
+		// Check if the dataset exists
+		if (!this.datasets.has(id)) {
+			throw new NotFoundError(`Dataset with id '${id}' does not exist`);
+		}
+	
+		// Remove the dataset from in-memory storage
+		this.datasets.delete(id);
+	
+		// Remove the dataset file from disk
+		const dataDir = path.join(process.cwd(), "data");
+		const filePath = path.join(dataDir, `${id}.json`);
+	
+		try {
+			await fs.remove(filePath);
+		} catch (error) {
+			throw new InsightError("Failed to remove dataset from disk");
+		}
+	
+		// Return the id of the removed dataset
+		return id;
 	}
 
 	public async performQuery(query: unknown): Promise<InsightResult[]> {
@@ -72,7 +159,173 @@ export default class InsightFacade implements IInsightFacade {
 
 	public async listDatasets(): Promise<InsightDataset[]> {
 		// TODO: Remove this once you implement the methods!
-		return Object.values(this.datasets);
+		const datasetsList: InsightDataset[] = [];
+
+		for (const [id, courses] of this.datasets) {
+			let numRows = 0;
+			for (const course of courses) {
+				numRows += course.sections.length;
+			}
+			datasetsList.push({
+				id,
+				kind: InsightDatasetKind.Sections,
+				numRows: numRows,
+			});
+		}
+
+		return datasetsList;
 	}
 
+	private isValidId(id: string): boolean {
+		if (typeof id !== "string") {
+			return false;
+		}
+		const trimmedId = id.trim();
+		return trimmedId.length > 0 && !trimmedId.includes("_");
+	}
+
+	private async processZipFile(zip: JSZip): Promise<Course[]> {
+		const coursesMap: Map<string, Course> = new Map();
+		const coursesFolder = zip.folder("courses");
+
+		if (!coursesFolder) {
+			throw new InsightError("The zip file does not contain a 'courses' folder");
+		}
+
+		const files = coursesFolder.filter((relativePath, file) => !file.dir);
+
+		for (const file of files) {
+			try {
+				const content = await file.async("text");
+				const json = JSON.parse(content);
+				const result = json.result;
+
+				if (Array.isArray(result)) {
+					for (const rawSection of result) {
+						if (this.isValidSection(rawSection)) {
+							const courseKey = `${rawSection.Subject}${rawSection.Course}`;
+							const section = this.parseSection(rawSection);
+
+							let course = coursesMap.get(courseKey);
+							if (!course) {
+								course = new Course(rawSection.Subject, rawSection.Course, rawSection.Title);
+								coursesMap.set(courseKey, course);
+							}
+
+							course.addSection(section);
+						}
+					}
+				}
+			} catch (error) {
+				// Continue to next file if parsing fails
+				continue;
+			}
+		}
+
+		return Array.from(coursesMap.values());
+	}
+
+	private isValidSection(section: any): boolean {
+		return (
+			section &&
+			typeof section.Subject === "string" &&
+			typeof section.Course === "string" &&
+			!isNaN(Number(section.Avg)) &&
+			typeof section.Professor === "string" &&
+			typeof section.Title === "string" &&
+			!isNaN(Number(section.Pass)) &&
+			!isNaN(Number(section.Fail)) &&
+			!isNaN(Number(section.Audit)) &&
+			section.id != null &&
+			typeof section.Section === "string" &&
+			!isNaN(Number(section.Year))
+		);
+	}
+
+	private parseSection(section: any): Section {
+		const year = section.Section === "overall" ? 1900 : Number(section.Year);
+
+		return new Section(
+			section.Section,
+			section.id.toString(),
+			year,
+			section.Professor || "",
+			Number(section.Avg),
+			Number(section.Pass),
+			Number(section.Fail),
+			Number(section.Audit)
+		);
+	}
+
+	private async loadDatasetsFromDisk(): Promise<void> {
+		const dataDir = path.join(process.cwd(), "data");
+
+		try {
+			const exists = await fs.pathExists(dataDir);
+			if (!exists) {
+				return;
+			}
+
+			const files = await fs.readdir(dataDir);
+			for (const file of files) {
+				if (file.endsWith(".json")) {
+					const filePath = path.join(dataDir, file);
+					try {
+						const serializedCourses: any[] = await fs.readJSON(filePath);
+						const id = path.basename(file, ".json");
+
+						const courses: Course[] = serializedCourses.map((serializedCourse) => {
+							const course = new Course(serializedCourse.dept, serializedCourse.id, serializedCourse.title);
+
+							course.sections = serializedCourse.sections.map(
+								(serializedSection: {
+									section: string;
+									uuid: string;
+									year: number;
+									instructor: string;
+									avg: number;
+									pass: number;
+									fail: number;
+									audit: number;
+								}) => {
+									return new Section(
+										serializedSection.section,
+										serializedSection.uuid,
+										serializedSection.year,
+										serializedSection.instructor,
+										serializedSection.avg,
+										serializedSection.pass,
+										serializedSection.fail,
+										serializedSection.audit
+									);
+								}
+							);
+
+							return course;
+						});
+
+						this.datasets.set(id, courses);
+					} catch (error) {
+						console.error(`Failed to load dataset from file ${file}:`, error);
+						continue;
+					}
+				}
+			}
+		} catch (error) {
+			console.error("Failed to read datasets from disk:", error);
+		}
+	}
+
+	private async saveDatasetToDisk(id: string, courses: Course[]): Promise<void> {
+		const dataDir = path.join(process.cwd(), "data");
+		const filePath = path.join(dataDir, `${id}.json`);
+
+		try {
+			await fs.ensureDir(dataDir);
+			const serializedCourses = courses.map((course) => course.toJSON());
+			await fs.writeJSON(filePath, serializedCourses);
+		} catch (error) {
+			throw new InsightError("Failed to save dataset to disk");
+		}
+	}
 }
