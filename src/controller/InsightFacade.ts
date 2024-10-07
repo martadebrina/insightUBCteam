@@ -179,9 +179,9 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private isValidId(id: string): boolean {
-		if (typeof id !== "string") {
-			return false;
-		}
+		// if (typeof id !== "string") {
+		// 	return false;
+		// }
 		const trimmedId = id.trim();
 		return trimmedId.length > 0 && !trimmedId.includes("_");
 	}
