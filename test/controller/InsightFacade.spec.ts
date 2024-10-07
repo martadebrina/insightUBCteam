@@ -52,16 +52,8 @@ describe("InsightFacade", function () {
 
 		it("should reject when id is the same as the id of an already added dataset", async function () {
 			try {
-				await facade.addDataset(
-					"courseID",
-					sections,
-					InsightDatasetKind.Sections
-				);
-				await facade.addDataset(
-					"courseID",
-					sections,
-					InsightDatasetKind.Sections
-				);
+				await facade.addDataset("courseID", sections, InsightDatasetKind.Sections);
+				await facade.addDataset("courseID", sections, InsightDatasetKind.Sections);
 				expect.fail("Should have thrown above.");
 			} catch (err) {
 				expect(err).to.be.instanceOf(InsightError);
@@ -76,8 +68,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
-		
 
 		it("should reject id starts with _", async function () {
 			try {
@@ -308,16 +298,8 @@ describe("InsightFacade", function () {
 
 		it("should return remaining array after removing one", async function () {
 			try {
-				await facade.addDataset(
-					"courseID1",
-					sections,
-					InsightDatasetKind.Sections
-				);
-				await facade.addDataset(
-					"courseID2",
-					sections,
-					InsightDatasetKind.Sections
-				);
+				await facade.addDataset("courseID1", sections, InsightDatasetKind.Sections);
+				await facade.addDataset("courseID2", sections, InsightDatasetKind.Sections);
 				await facade.removeDataset("courseID1");
 				const list3 = await facade.listDatasets();
 				expect(list3[0]).to.deep.equal({
