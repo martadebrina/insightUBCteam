@@ -90,6 +90,7 @@ export default class InsightFacade implements IInsightFacade {
 	constructor() {
 		this.datasets = new Map<string, Course[]>();
 		void this.loadDatasetsFromDisk().catch((_error) => {
+			throw new InsightError("");
 		});
 	}
 
@@ -135,6 +136,9 @@ export default class InsightFacade implements IInsightFacade {
 			throw new NotFoundError(`Dataset with id '${id}' does not exist`);
 		}
 
+		this.datasets.delete(id);
+		const filePath = path.join(DATA_DIR, `${id}.json`);
+
 		try {
 			await fs.remove(filePath);
 		} catch (_error) {
@@ -153,9 +157,9 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private isValidId(id: string): boolean {
-		// if (typeof id !== "string") {
-		// 	return false;
-		// }
+		if (typeof id !== "string") {
+			return false;
+		}
 		const trimmedId = id.trim();
 		return trimmedId.length > 0 && !trimmedId.includes("_");
 	}
@@ -169,6 +173,7 @@ export default class InsightFacade implements IInsightFacade {
 		}
 
 		const files = coursesFolder.filter((_relativePath, file) => !file.dir);
+		const filePromises = files.map(async (file) => this.processFile(file, coursesMap));
 
 		await Promise.all(filePromises);
 		return Array.from(coursesMap.values());
@@ -195,7 +200,10 @@ export default class InsightFacade implements IInsightFacade {
 						course.addSection(section);
 					}
 				}
-
+			}
+		} catch (_error) {
+			// Skip file if parsing fails
+		}
 	}
 
 	private isValidSection(section: any): boolean {
@@ -216,6 +224,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private parseSection(section: any): Section {
+		const year = section.Section === "overall" ? DEFAULT_YEAR : Number(section.Year);
 
 		return new Section(
 			section.Section,
@@ -235,6 +244,11 @@ export default class InsightFacade implements IInsightFacade {
 			if (!exists) {
 				return;
 			}
+
+			const files = await fs.readdir(DATA_DIR);
+			const jsonFiles = files.filter((file) => file.endsWith(".json"));
+
+			await this.loadAllDatasets(jsonFiles);
 		} catch (_error) {
 			// console.error("Failed to read datasets from disk:", error);
 		}
