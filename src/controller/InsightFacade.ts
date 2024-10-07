@@ -1,14 +1,17 @@
-import { IInsightFacade, InsightDataset, InsightDatasetKind, InsightResult, NotFoundError } from "./IInsightFacade";
-import { InsightError } from "./IInsightFacade";
+import {
+	IInsightFacade,
+	InsightDataset,
+	InsightDatasetKind,
+	InsightResult,
+	NotFoundError,
+	InsightError,
+} from "./IInsightFacade";
 import JSZip from "jszip";
 import * as fs from "fs-extra";
 import * as path from "path";
 
-/**
- * This is the main programmatic entry point for the project.
- * Method documentation is in IInsightFacade
- *
- */
+const DEFAULT_YEAR = 1900;
+const DATA_DIR = path.join(process.cwd(), "data");
 
 export class Section {
 	public section: string;
@@ -87,12 +90,10 @@ export default class InsightFacade implements IInsightFacade {
 	constructor() {
 		this.datasets = new Map<string, Course[]>();
 		void this.loadDatasetsFromDisk().catch((_error) => {
-			throw new InsightError("Failed to load datasets from disk");
 		});
 	}
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		// Validate the id
 		if (!this.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
@@ -126,23 +127,13 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async removeDataset(id: string): Promise<string> {
-		// TODO: Remove this once you implement the methods!
-		// Validate the id
 		if (!this.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
 
-		// Check if the dataset exists
 		if (!this.datasets.has(id)) {
 			throw new NotFoundError(`Dataset with id '${id}' does not exist`);
 		}
-
-		// Remove the dataset from in-memory storage
-		this.datasets.delete(id);
-
-		// Remove the dataset file from disk
-		const dataDir = path.join(process.cwd(), "data");
-		const filePath = path.join(dataDir, `${id}.json`);
 
 		try {
 			await fs.remove(filePath);
@@ -150,32 +141,15 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("Failed to remove dataset from disk");
 		}
 
-		// Return the id of the removed dataset
 		return id;
 	}
 
 	public async performQuery(query: unknown): Promise<InsightResult[]> {
-		// TODO: Remove this once you implement the methods!
 		throw new Error(`InsightFacadeImpl::performQuery() is unimplemented! - query=${query};`);
 	}
 
 	public async listDatasets(): Promise<InsightDataset[]> {
-		// TODO: Remove this once you implement the methods!
-		const datasetsList: InsightDataset[] = [];
-
-		for (const [id, courses] of this.datasets) {
-			let numRows = 0;
-			for (const course of courses) {
-				numRows += course.sections.length;
-			}
-			datasetsList.push({
-				id,
-				kind: InsightDatasetKind.Sections,
-				numRows: numRows,
-			});
-		}
-
-		return datasetsList;
+		return this.getDatasetList();
 	}
 
 	private isValidId(id: string): boolean {
@@ -196,36 +170,32 @@ export default class InsightFacade implements IInsightFacade {
 
 		const files = coursesFolder.filter((_relativePath, file) => !file.dir);
 
-		const filePromises = files.map(async (file) => {
-			try {
-				const content = await file.async("text");
-				const json = JSON.parse(content);
-				const result = json.result;
+		await Promise.all(filePromises);
+		return Array.from(coursesMap.values());
+	}
 
-				if (Array.isArray(result)) {
-					for (const rawSection of result) {
-						if (this.isValidSection(rawSection)) {
-							const courseKey = `${rawSection.Subject}${rawSection.Course}`;
-							const section = this.parseSection(rawSection);
+	private async processFile(file: JSZip.JSZipObject, coursesMap: Map<string, Course>): Promise<void> {
+		try {
+			const content = await file.async("text");
+			const json = JSON.parse(content);
+			const result = json.result;
 
-							let course = coursesMap.get(courseKey);
-							if (!course) {
-								course = new Course(rawSection.Subject, rawSection.Course, rawSection.Title);
-								coursesMap.set(courseKey, course);
-							}
+			if (Array.isArray(result)) {
+				for (const rawSection of result) {
+					if (this.isValidSection(rawSection)) {
+						const courseKey = `${rawSection.Subject}${rawSection.Course}`;
+						const section = this.parseSection(rawSection);
 
-							course.addSection(section);
+						let course = coursesMap.get(courseKey);
+						if (!course) {
+							course = new Course(rawSection.Subject, rawSection.Course, rawSection.Title);
+							coursesMap.set(courseKey, course);
 						}
+
+						course.addSection(section);
 					}
 				}
-			} catch (_error) {
-				// Handle error if necessary
-			}
-		});
 
-		await Promise.all(filePromises);
-
-		return Array.from(coursesMap.values());
 	}
 
 	private isValidSection(section: any): boolean {
@@ -246,8 +216,6 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private parseSection(section: any): Section {
-		const a = 1900;
-		const year = section.Section === "overall" ? a : Number(section.Year);
 
 		return new Section(
 			section.Section,
@@ -262,91 +230,81 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async loadDatasetsFromDisk(): Promise<void> {
-		const dataDir = path.join(process.cwd(), "data");
-
 		try {
-			const exists = await fs.pathExists(dataDir);
+			const exists = await fs.pathExists(DATA_DIR);
 			if (!exists) {
 				return;
 			}
-
-			const files = await fs.readdir(dataDir);
-			const readPromises = files
-				.filter((file) => file.endsWith(".json"))
-				.map(async (file) => {
-					const filePath = path.join(dataDir, file);
-					try {
-						const serializedCourses = await fs.readJSON(filePath);
-						const id = path.basename(file, ".json");
-
-						const courses: Course[] = serializedCourses.map(
-							(serializedCourse: {
-								dept: string;
-								id: string;
-								title: string;
-								sections: {
-									section: string;
-									uuid: string;
-									year: number;
-									instructor: string;
-									avg: number;
-									pass: number;
-									fail: number;
-									audit: number;
-								}[];
-							}) => {
-								const course = new Course(serializedCourse.dept, serializedCourse.id, serializedCourse.title);
-
-								course.sections = serializedCourse.sections.map(
-									(serializedSection: {
-										section: string;
-										uuid: string;
-										year: number;
-										instructor: string;
-										avg: number;
-										pass: number;
-										fail: number;
-										audit: number;
-									}) => {
-										return new Section(
-											serializedSection.section,
-											serializedSection.uuid,
-											serializedSection.year,
-											serializedSection.instructor,
-											serializedSection.avg,
-											serializedSection.pass,
-											serializedSection.fail,
-											serializedSection.audit
-										);
-									}
-								);
-
-								return course;
-							}
-						);
-
-						this.datasets.set(id, courses);
-					} catch (_error) {
-						// Handle error if necessary
-					}
-				});
-
-			await Promise.all(readPromises);
 		} catch (_error) {
 			// console.error("Failed to read datasets from disk:", error);
 		}
 	}
 
+	private async loadAllDatasets(jsonFiles: string[]): Promise<void> {
+		const loadPromises = jsonFiles.map(async (file) => this.loadDatasetFromFile(file));
+		await Promise.all(loadPromises);
+	}
+
+	private async loadDatasetFromFile(file: string): Promise<void> {
+		const filePath = path.join(DATA_DIR, file);
+		try {
+			const serializedCourses: any[] = await fs.readJSON(filePath);
+			const id = path.basename(file, ".json");
+
+			const courses = serializedCourses.map((serializedCourse) => this.deserializeCourse(serializedCourse));
+			this.datasets.set(id, courses);
+		} catch (_error) {
+			// console.error(`Failed to load dataset from file ${file}:`, error);
+		}
+	}
+
+	private deserializeCourse(serializedCourse: any): Course {
+		const course = new Course(serializedCourse.dept, serializedCourse.id, serializedCourse.title);
+
+		course.sections = serializedCourse.sections.map(
+			(serializedSection: any) =>
+				new Section(
+					serializedSection.section,
+					serializedSection.uuid,
+					serializedSection.year,
+					serializedSection.instructor,
+					serializedSection.avg,
+					serializedSection.pass,
+					serializedSection.fail,
+					serializedSection.audit
+				)
+		);
+
+		return course;
+	}
+
 	private async saveDatasetToDisk(id: string, courses: Course[]): Promise<void> {
-		const dataDir = path.join(process.cwd(), "data");
-		const filePath = path.join(dataDir, `${id}.json`);
+		const filePath = path.join(DATA_DIR, `${id}.json`);
 
 		try {
-			await fs.ensureDir(dataDir);
+			await fs.ensureDir(DATA_DIR);
 			const serializedCourses = courses.map((course) => course.toJSON());
 			await fs.writeJSON(filePath, serializedCourses);
 		} catch (_error) {
 			throw new InsightError("Failed to save dataset to disk");
 		}
+	}
+
+	private getDatasetList(): InsightDataset[] {
+		const datasetsList: InsightDataset[] = [];
+
+		for (const [id, courses] of this.datasets) {
+			let numRows = 0;
+			for (const course of courses) {
+				numRows += course.sections.length;
+			}
+			datasetsList.push({
+				id,
+				kind: InsightDatasetKind.Sections,
+				numRows,
+			});
+		}
+
+		return datasetsList;
 	}
 }
