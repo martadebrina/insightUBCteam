@@ -27,15 +27,55 @@ describe("InsightFacade", function () {
 	// Declare datasets used in tests. You should add more datasets like this!
 	let sections: string;
 	let sections1: string;
+	let sections2: string;
 
 	before(async function () {
 		// This block runs once and loads the datasets.
 		sections = await getContentFromArchives("pair.zip");
-		sections1 = await getContentFromArchives("onevalid.zip");
+		sections1 = await getContentFromArchives("novalid.zip");
+		sections2 = await getContentFromArchives("nofolder.zip");
 
 		// Just in case there is anything hanging around from a previous run of the test suite
 		await clearDisk();
 	});
+
+	// describe("Caching Tests without Sinon", function () {
+	// 	let insightFacade: InsightFacade;
+	// 	const testDataPath = "./testData";  // Directory to store test files
+
+	// 	beforeEach(async function () {
+	// 		// Ensure the test directory is clean before each test
+	// 		await fs.remove(testDataPath);
+	// 		await fs.ensureDir(testDataPath);
+	// 		insightFacade = new InsightFacade();
+	// 	});
+
+	// 	afterEach(async function () {
+	// 		// Clean up after each test
+	// 		await fs.remove(testDataPath);
+	// 	});
+
+	// 	it("should add dataset and check if file is saved on disk", async function () {
+	// 		const id = "courses";
+	// 		const content = ;  // Replace with actual encoded content
+	// 		const kind = InsightDatasetKind.Sections;
+
+	// 		// Add dataset and verify it's returned in the list
+	// 		const datasets = await insightFacade.addDataset(id, content, kind);
+	// 		expect(datasets).to.include(id);
+
+	// 		// Verify that the dataset file was saved to disk
+	// 		const datasetFilePath = `${testDataPath}/Datasets.json`;
+	// 		const fileExists = await fs.pathExists(datasetFilePath);
+	// 		expect(fileExists).to.be.true;
+
+	// 		// Read the saved file and verify its content
+	// 		const savedData = await fs.readJSON(datasetFilePath);
+	// 		expect(savedData.length).to.equal(1);
+	// 		expect(savedData[0][0]).to.equal(id);
+	// 		expect(savedData[0][1].numRows).to.be.greaterThan(0);  // Example check
+	// 	});
+	// });
 
 	describe("AddDataset", function () {
 		beforeEach(function () {
@@ -118,6 +158,15 @@ describe("InsightFacade", function () {
 			try {
 				await facade.addDataset("CPSC313", sections1, InsightDatasetKind.Sections);
 				expect.fail("should reject dataset with no valid course");
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
+			}
+		});
+
+		it("should reject dataset with no courses folder", async function () {
+			try {
+				await facade.addDataset("CPSC313", sections2, InsightDatasetKind.Sections);
+				expect.fail("should reject dataset with no courses folder");
 			} catch (_err) {
 				expect(_err).to.be.instanceOf(InsightError);
 			}

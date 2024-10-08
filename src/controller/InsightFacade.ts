@@ -3,7 +3,7 @@ import {
 	InsightDataset,
 	InsightDatasetKind,
 	InsightResult,
-	// NotFoundError,
+	NotFoundError,
 	InsightError,
 } from "./IInsightFacade";
 import JSZip, { loadAsync } from "jszip";
@@ -13,34 +13,23 @@ import * as fs from "fs-extra";
 class Datasets {
 	// private datasetMap: Map<string, DatasetInfo>;
 
-	public courses: Course[];
+	public sections: Section[];
 	public numRows: number;
-	private kind: InsightDatasetKind;
+	public kind: InsightDatasetKind;
 
 	constructor() {
-		this.courses = [];
+		this.sections = [];
 		this.numRows = 0;
 		this.kind = InsightDatasetKind.Sections;
 	}
 
-	public addCourse(newCourse: Course): void {
-		this.courses.push(newCourse);
+	public addSection(newCourse: Section): void {
 		++this.numRows;
+		this.sections.push(newCourse);
 	}
-	// public addDatasets(courses: Course[], numRows: number, kind: InsightDatasetKind): void {
-	// 	this.datasetMap.set(id, datasetInfo);
-	// }
-
-	// public getDataset(): DDatasatasetInfo | undefined {
-	// 	return this.dataset.get(id);
-	// }
-
-	// public getAllDatasets(): Map<string, DatasetInfo> {
-	// 	return this.datasetMap;
-	// }
 }
 
-class Course {
+class Section {
 	// private sectionList: any[];
 
 	public uuid: string;
@@ -55,10 +44,9 @@ class Course {
 	public audit: number;
 
 	constructor(section: any) {
-		// check undefined variable
-		if (!this.undefinedCheck(section)) {
-			// console.log("err1");
-			throw new InsightError("Undefined variable");
+		// check if section is valid
+		if (!this.isValidSection(section)) {
+			throw new InsightError("Undefined variable -> invalid section");
 		}
 		try {
 			this.uuid = String(section.id);
@@ -76,11 +64,11 @@ class Course {
 			this.fail = this.anyToNum(section.Fail);
 			this.audit = this.anyToNum(section.Audit);
 		} catch (_err) {
-			// console.log("err2");
 			throw new InsightError("invalid variable type");
 		}
 	}
-	public undefinedCheck(c: any): boolean {
+
+	public isValidSection(c: any): boolean {
 		return (
 			c.id === undefined ||
 			c.Course === undefined ||
@@ -103,35 +91,18 @@ class Course {
 		}
 		return num;
 	}
-
-	// public addSection(section: any): void {
-	// 	this.sectionList.push(section);
-	// }
-
-	// public setSections(sections: any[]): void {
-	// 	this.sectionList = sections;
-	// }
-
-	// public getSections(): any[] {
-	// 	return this.sectionList;
-	// }
 }
 
 export default class InsightFacade implements IInsightFacade {
 	private datasets = new Map<string, Datasets>();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
+		await this.loadDatasetsFromDisk();
+
 		if (!this.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
 
-		// verify content
-		// const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-		// if (base64regex.test(content)) {
-		// 	throw new InsightError("content not base64");
-		// }
-
-		// verify kind
 		if (kind !== InsightDatasetKind.Sections) {
 			throw new InsightError("kind not valid");
 		}
@@ -155,25 +126,80 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("Fail to unzip");
 		}
 
-		// proses zip
-
-		// fs.writeJSON("/data/datasets.json", this.datasets);
-
 		return Array.from(this.datasets.keys());
 	}
 
 	public async removeDataset(id: string): Promise<string> {
+		await this.loadDatasetsFromDisk();
+
+		if (!this.isValidId(id)) {
+			throw new InsightError("Invalid id");
+		}
+
+		if (!this.datasets.has(id)) {
+			throw new NotFoundError("cannot find id");
+		}
+
+		this.datasets.delete(id);
+
+		await this.saveDatasetsDisk(this.datasets);
+
 		return id;
 	}
 
+	public async listDatasets(): Promise<InsightDataset[]> {
+		await this.loadDatasetsFromDisk();
+
+		const insightDatasetList: InsightDataset[] = [];
+		const datasetList = this.datasets.entries();
+
+		for (const [id, dataset] of datasetList) {
+			// from chatGPT (next 5 lines)
+			const insightDataset: InsightDataset = {
+				id: id,
+				kind: dataset.kind,
+				numRows: dataset.numRows,
+			};
+			insightDatasetList.push(insightDataset);
+		}
+		return insightDatasetList;
+	}
+
 	public async performQuery(query: unknown): Promise<InsightResult[]> {
+		await this.loadDatasetsFromDisk();
+
+		// console.log(query);
+
+		// go through the json (from chatGPT)
+		const { WHERE, OPTIONS } = query as any;
+
+		if (!WHERE || !OPTIONS) {
+			throw new InsightError("invalid format");
+		}
+
+		const queryId = await this.getQueryId(query);
+		if (!this.datasets.has(queryId)) {
+			throw new InsightError("No dataset found");
+		}
+
+		// const foundDataset = this.datasets.get(queryId);
+		// WHERE
+		// const filtered = await this.handleWhere(WHERE, this.datasets.get(queryId).sections);
+
+		// OPTIONS
+		// const result = await this.handleOptions(OPTIONS, filtered);
+
 		throw new Error(`InsightFacadeImpl::performQuery() is unimplemented! - query=${query};`);
 	}
 
-	public async listDatasets(): Promise<InsightDataset[]> {
-		// return this.getDatasetList();
-		return [];
-	}
+	// private async getQueryId(query: unknown): Promise<string> {
+	// 	// TODO!!!
+	// 	return "";
+	// }
+
+	// private async handleWhere(WHERE: any, dataset: Section[]): Promise<Section[]> {
+	// 	return [];
+	// }
 
 	private isValidId(id: string): boolean {
 		const trimmedId = id.trim();
@@ -181,7 +207,27 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async loadDatasetsFromDisk(): Promise<void> {
-		throw new Error("Function not implemented.");
+		const exist = await fs.pathExists("./data/Datasets.json");
+
+		if (!exist) {
+			return;
+		}
+
+		const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
+
+		// this.datasets.clear();
+
+		for (const [id, dataset] of datasetArray) {
+			if (this.datasets.has(id)) {
+				continue;
+			}
+			const newData = new Datasets();
+			newData.sections = dataset.sections;
+			newData.numRows = dataset.numRows;
+			newData.kind = dataset.kind;
+			this.datasets.set(id, newData);
+		}
+		// console.log(this.datasets);
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {
@@ -204,31 +250,27 @@ export default class InsightFacade implements IInsightFacade {
 
 		for (const course of fulfillPromises) {
 			for (const section of course) {
-				const dumpCourse = new Course(section);
-				dumpDatasets.addCourse(dumpCourse);
-				// try {
-				// 	const dumpCourse = new Course(section);
-				// 	console.log(dumpCourse);
-				// 	dumpDatasets.addCourse(dumpCourse);
-				// 	// console.log("msuk2");
-				// } catch (error) {
-				// 	continue;
-				// }
+				const dumpSection = new Section(section);
+				dumpDatasets.addSection(dumpSection);
 			}
 		}
-		if (dumpDatasets.courses.length === 0) {
+		if (dumpDatasets.sections.length === 0) {
 			throw new InsightError("");
 		}
-		// console.log(dumpDatasets.courses);
 
 		// set map
 		datasets.set(id, dumpDatasets);
-		// Convert Map to an object before writing
-		const datasetsArray = Array.from(datasets.entries());
 
-		// Ensure the directory exists
+		await this.saveDatasetsDisk(datasets);
+	}
+
+	private async saveDatasetsDisk(datasets: Map<String, Datasets>): Promise<void> {
+		// Convert Map to an object before writing, from chatGPT
+		const datasetsArray = Array.from(datasets.entries());
+		// console.log(this.datasets);
+
 		await fs.ensureDir("./data");
 
-		await fs.writeJSON(`./data/Datasets.json`, datasetsArray);
+		await fs.writeJSON("./data/Datasets.json", datasetsArray);
 	}
 }
