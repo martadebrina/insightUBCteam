@@ -37,7 +37,7 @@ describe("InsightFacade", function () {
 		await clearDisk();
 	});
 
-	describe.only("AddDataset", function () {
+	describe("AddDataset", function () {
 		beforeEach(function () {
 			// This section resets the insightFacade instance
 			// This runs before each test
