@@ -177,10 +177,10 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("invalid format");
 		}
 
-		const queryId = await this.getQueryId(query);
-		if (!this.datasets.has(queryId)) {
-			throw new InsightError("No dataset found");
-		}
+		// const queryId = await this.getQueryId(query);
+		// if (!this.datasets.has(queryId)) {
+		// 	throw new InsightError("No dataset found");
+		// }
 
 		// const foundDataset = this.datasets.get(queryId);
 		// WHERE
