@@ -166,40 +166,143 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async performQuery(query: unknown): Promise<InsightResult[]> {
+		// load from disk
 		await this.loadDatasetsFromDisk();
 
 		// console.log(query);
 
-		// go through the json (from chatGPT)
+		// go through the query (from chatGPT)
 		const { WHERE, OPTIONS } = query as any;
 
+		// check valid WHERE and valid OPTION
 		if (!WHERE || !OPTIONS) {
 			throw new InsightError("invalid format");
 		}
 
-		// const queryId = await this.getQueryId(query);
-		// if (!this.datasets.has(queryId)) {
-		// 	throw new InsightError("No dataset found");
-		// }
+		// get id from first element of column
+		const queryId = await this.getQueryId(OPTIONS);
 
-		// const foundDataset = this.datasets.get(queryId);
-		// WHERE
-		// const filtered = await this.handleWhere(WHERE, this.datasets.get(queryId).sections);
+		const foundDataset = this.datasets.get(queryId);
+		// no dataset with id found
+		if (!foundDataset) {
+			throw new InsightError("reference not found");
+		}
+		const filtered = await this.handleWhere(WHERE, foundDataset.sections);
 
-		// OPTIONS
+		// handle OPTIONS
 		// const result = await this.handleOptions(OPTIONS, filtered);
 
 		throw new Error(`InsightFacadeImpl::performQuery() is unimplemented! - query=${query};`);
 	}
 
-	// private async getQueryId(query: unknown): Promise<string> {
-	// 	// TODO!!!
-	// 	return "";
-	// }
+	private async getQueryId(options: any): Promise<string> {
+		// TODO: return dataset id from first element of column
+		// check for no column and empty column
+		const columns = options.COLUMNS as any;
+		if (!columns) {
+			throw new InsightError("no columns");
+		}
+		if (columns.length === 0) {
+			throw new InsightError("column is empty");
+		}
+		const id = columns[0].split("_")[0];
+		return id;
+	}
 
-	// private async handleWhere(WHERE: any, dataset: Section[]): Promise<Section[]> {
-	// 	return [];
-	// }
+	private async handleWhere(where: any, sections: Section[]): Promise<Section[]> {
+		// Todo: traverse the BODY
+
+		// base case
+		if (where.length === 0) {
+			return sections;
+		}
+		if (where.AND || where.OR) {
+			// handle logic comp
+			return await this.handleLogicComp(where, sections);
+		}
+		if (where.NOT) {
+			// handle logic comp
+			return await this.handleNegation(where, sections);
+		}
+		if (where.IS) {
+			return await this.handleSComp(where, sections);
+		}
+		if (where.LT || where.GT || where.EQ) {
+			return await this.handleMComp(where, sections);
+		}
+
+		throw new InsightError("invalid ebnf");
+	}
+
+	private async handleMComp(where: any, sections: Section[]): Promise<Section[]> {
+		// now we have list of sections with ID yang dimau
+		if (where.GT) {
+			const [key, value]: [string, unknown] = Object.entries(where.GT)[0];
+			const param = key.split("_")[1];
+			if (typeof value !== "number") {
+				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
+			}
+
+			if (isNaN(value)) {
+				throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
+			}
+
+			return sections.filter((s) => {
+				return this.getParamNum(param, s) > value;
+			});
+		}
+		if (where.LT) {
+			const [key, value]: [string, unknown] = Object.entries(where.LT)[0];
+			const param = key.split("_")[1];
+			console.log(param);
+			if (typeof value !== "number") {
+				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
+			}
+
+			if (isNaN(value)) {
+				throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
+			}
+
+			return sections.filter((s) => {
+				return this.getParamNum(param, s) < value;
+			});
+		}
+
+		if (where.EQ) {
+			const [key, value]: [string, unknown] = Object.entries(where.EQ)[0];
+			const param = key.split("_")[1];
+			console.log(param);
+			if (typeof value !== "number") {
+				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
+			}
+
+			if (isNaN(value)) {
+				throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
+			}
+			return sections.filter((s) => {
+				return this.getParamNum(param, s) > value;
+			});
+		}
+
+		throw new InsightError("no m comp");
+	}
+
+	private async handleSComp(where: any, sections: Section[]): Promise<Section[]> {
+		return sections;
+	}
+
+	private async handleLogicComp(where: any, sections: Section[]): Promise<Section[]> {
+		return sections;
+	}
+
+	private async handleNegation(where: any, sections: Section[]): Promise<Section[]> {
+		// filter the sections
+
+		const filteredSections = await this.handleWhere(where.NOT, sections);
+		return sections.filter((s: Section) => {
+			return !filteredSections.includes(s);
+		});
+	}
 
 	private isValidId(id: string): boolean {
 		const trimmedId = id.trim();
@@ -272,5 +375,24 @@ export default class InsightFacade implements IInsightFacade {
 		await fs.ensureDir("./data");
 
 		await fs.writeJSON("./data/Datasets.json", datasetsArray);
+	}
+
+	private getParamNum(param: String, s: Section): number {
+		if (param === "year") {
+			return s.year;
+		}
+		if (param === "avg") {
+			return s.avg;
+		}
+		if (param === "pass") {
+			return s.pass;
+		}
+		if (param === "fail") {
+			return s.year;
+		}
+		if (param === "audit") {
+			return s.audit;
+		}
+		throw new InsightError();
 	}
 }
