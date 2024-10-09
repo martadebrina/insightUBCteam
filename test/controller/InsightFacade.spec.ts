@@ -8,34 +8,69 @@ import {
 } from "../../src/controller/IInsightFacade";
 import InsightFacade from "../../src/controller/InsightFacade";
 import { clearDisk, getContentFromArchives, loadTestQuery } from "../TestUtil";
-
 import { expect, use } from "chai";
 import chaiAsPromised from "chai-as-promised";
-
 use(chaiAsPromised);
-
 export interface ITestQuery {
 	title?: string;
 	input: unknown;
 	errorExpected: boolean;
 	expected: any;
 }
-
 describe("InsightFacade", function () {
 	let facade: IInsightFacade;
-
 	// Declare datasets used in tests. You should add more datasets like this!
 	let sections: string;
 	let sections1: string;
+	let sections2: string;
 
 	before(async function () {
 		// This block runs once and loads the datasets.
 		sections = await getContentFromArchives("pair.zip");
-		sections1 = await getContentFromArchives("onevalid.zip");
+		sections1 = await getContentFromArchives("novalid.zip");
+		sections2 = await getContentFromArchives("nofolder.zip");
 
 		// Just in case there is anything hanging around from a previous run of the test suite
 		await clearDisk();
 	});
+
+	// describe("Caching Tests without Sinon", function () {
+	// 	let insightFacade: InsightFacade;
+	// 	const testDataPath = "./testData";  // Directory to store test files
+
+	// 	beforeEach(async function () {
+	// 		// Ensure the test directory is clean before each test
+	// 		await fs.remove(testDataPath);
+	// 		await fs.ensureDir(testDataPath);
+	// 		insightFacade = new InsightFacade();
+	// 	});
+
+	// 	afterEach(async function () {
+	// 		// Clean up after each test
+	// 		await fs.remove(testDataPath);
+	// 	});
+
+	// 	it("should add dataset and check if file is saved on disk", async function () {
+	// 		const id = "courses";
+	// 		const content = ;  // Replace with actual encoded content
+	// 		const kind = InsightDatasetKind.Sections;
+
+	// 		// Add dataset and verify it's returned in the list
+	// 		const datasets = await insightFacade.addDataset(id, content, kind);
+	// 		expect(datasets).to.include(id);
+
+	// 		// Verify that the dataset file was saved to disk
+	// 		const datasetFilePath = `${testDataPath}/Datasets.json`;
+	// 		const fileExists = await fs.pathExists(datasetFilePath);
+	// 		expect(fileExists).to.be.true;
+
+	// 		// Read the saved file and verify its content
+	// 		const savedData = await fs.readJSON(datasetFilePath);
+	// 		expect(savedData.length).to.equal(1);
+	// 		expect(savedData[0][0]).to.equal(id);
+	// 		expect(savedData[0][1].numRows).to.be.greaterThan(0);  // Example check
+	// 	});
+	// });
 
 	describe("AddDataset", function () {
 		beforeEach(function () {
@@ -43,13 +78,20 @@ describe("InsightFacade", function () {
 			// This runs before each test
 			facade = new InsightFacade();
 		});
-
 		afterEach(async function () {
 			// This section resets the data directory (removing any cached data)
 			// This runs after each test, which should make each test independent of the previous one
 			await clearDisk();
 		});
-
+		it("should reject when id is the same as the id of an already added dataset", async function () {
+			try {
+				await facade.addDataset("courseID", sections, InsightDatasetKind.Sections);
+				await facade.addDataset("courseID", sections, InsightDatasetKind.Sections);
+				expect.fail("Should have thrown above.");
+			} catch (err) {
+				expect(err).to.be.instanceOf(InsightError);
+			}
+		});
 		it("should reject with  an empty dataset id", async function () {
 			try {
 				await facade.addDataset("", sections, InsightDatasetKind.Sections);
@@ -58,7 +100,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("should reject id starts with _", async function () {
 			try {
 				await facade.addDataset("_DEF", sections, InsightDatasetKind.Sections);
@@ -67,7 +108,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("should reject id with _ in the middle", async function () {
 			try {
 				await facade.addDataset("D_EF", sections, InsightDatasetKind.Sections);
@@ -76,7 +116,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("should reject id with _ in the end", async function () {
 			try {
 				await facade.addDataset("DEF_", sections, InsightDatasetKind.Sections);
@@ -85,7 +124,6 @@ describe("InsightFacade", function () {
 				expect(err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("should reject id with only whitespace", async function () {
 			try {
 				await facade.addDataset("  ", sections, InsightDatasetKind.Sections);
@@ -94,7 +132,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("should added successfully", async function () {
 			try {
 				const set1 = await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
@@ -103,11 +140,19 @@ describe("InsightFacade", function () {
 				expect.fail("should not fail");
 			}
 		});
-
 		it("should reject dataset with no valid course", async function () {
 			try {
 				await facade.addDataset("CPSC313", sections1, InsightDatasetKind.Sections);
 				expect.fail("should reject dataset with no valid course");
+			} catch (_err) {
+				expect(_err).to.be.instanceOf(InsightError);
+			}
+		});
+
+		it("should reject dataset with no courses folder", async function () {
+			try {
+				await facade.addDataset("CPSC313", sections2, InsightDatasetKind.Sections);
+				expect.fail("should reject dataset with no courses folder");
 			} catch (_err) {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
@@ -120,13 +165,11 @@ describe("InsightFacade", function () {
 			// This runs before each test
 			facade = new InsightFacade();
 		});
-
 		afterEach(async function () {
 			// This section resets the data directory (removing any cached data)
 			// This runs after each test, which should make each test independent of the previous one
 			await clearDisk();
 		});
-
 		it("reject with an empty dataset id", async function () {
 			try {
 				await facade.removeDataset("");
@@ -135,7 +178,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("reject id starts with _", async function () {
 			try {
 				await facade.removeDataset("_DEF");
@@ -144,7 +186,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("reject id with _ in the middle", async function () {
 			try {
 				await facade.removeDataset("D_EF");
@@ -153,7 +194,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("reject id with _ in the end", async function () {
 			try {
 				await facade.removeDataset("DEF_");
@@ -162,7 +202,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("reject id with only whitespace", async function () {
 			try {
 				await facade.removeDataset("  ");
@@ -171,7 +210,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(InsightError);
 			}
 		});
-
 		it("should have removed successfully", async function () {
 			try {
 				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
@@ -181,7 +219,6 @@ describe("InsightFacade", function () {
 				expect.fail("should removed successfully");
 			}
 		});
-
 		it("cannot find id", async function () {
 			try {
 				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
@@ -191,7 +228,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(NotFoundError);
 			}
 		});
-
 		it("cannot remove empty dataset", async function () {
 			try {
 				await facade.removeDataset("CPSC");
@@ -200,7 +236,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(NotFoundError);
 			}
 		});
-
 		it("remove same dataset twice", async function () {
 			try {
 				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
@@ -211,7 +246,6 @@ describe("InsightFacade", function () {
 				expect(_err).to.be.instanceOf(NotFoundError);
 			}
 		});
-
 		it("should have removed multiple successfully", async function () {
 			try {
 				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
@@ -225,20 +259,17 @@ describe("InsightFacade", function () {
 			}
 		});
 	});
-
 	describe("ListDataset", function () {
 		beforeEach(function () {
 			// This section resets the insightFacade instance
 			// This runs before each test
 			facade = new InsightFacade();
 		});
-
 		afterEach(async function () {
 			// This section resets the data directory (removing any cached data)
 			// This runs after each test, which should make each test independent of the previous one
 			await clearDisk();
 		});
-
 		it("should list nothing", async function () {
 			try {
 				const set = await facade.listDatasets();
@@ -247,7 +278,6 @@ describe("InsightFacade", function () {
 				expect.fail("Should not fail");
 			}
 		});
-
 		it("should list one dataset", async function () {
 			try {
 				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
@@ -263,7 +293,6 @@ describe("InsightFacade", function () {
 				expect.fail("Should not fail");
 			}
 		});
-
 		it("should list multiple datasets", async function () {
 			try {
 				await facade.addDataset("ubc", sections, InsightDatasetKind.Sections);
@@ -285,8 +314,22 @@ describe("InsightFacade", function () {
 				expect.fail("Should not fail");
 			}
 		});
+		it("should return remaining array after removing one", async function () {
+			try {
+				await facade.addDataset("courseID1", sections, InsightDatasetKind.Sections);
+				await facade.addDataset("courseID2", sections, InsightDatasetKind.Sections);
+				await facade.removeDataset("courseID1");
+				const list3 = await facade.listDatasets();
+				expect(list3[0]).to.deep.equal({
+					id: "courseID2",
+					kind: InsightDatasetKind.Sections,
+					numRows: 64612,
+				});
+			} catch (_err) {
+				expect.fail("Should not have thrown an error");
+			}
+		});
 	});
-
 	describe("PerformQuery", function () {
 		/**
 		 * Loads the TestQuery specified in the test name and asserts the behaviour of performQuery.
@@ -325,27 +368,22 @@ describe("InsightFacade", function () {
 			}
 			// return expect.fail("Write your assertion(s) here."); // TODO: replace with your assertions
 		}
-
 		before(async function () {
 			facade = new InsightFacade();
-
 			// Add the datasets to InsightFacade once.
 			// Will *fail* if there is a problem reading ANY dataset.
 			const loadDatasetPromises: Promise<string[]>[] = [
 				facade.addDataset("sections", sections, InsightDatasetKind.Sections),
 			];
-
 			try {
 				await Promise.all(loadDatasetPromises);
 			} catch (_err) {
 				throw new Error(`In PerformQuery Before hook, dataset(s) failed to be added. \n${_err}`);
 			}
 		});
-
 		after(async function () {
 			await clearDisk();
 		});
-
 		// Examples demonstrating how to test performQuery using the JSON Test Queries.
 		// The relative path to the query file must be given in square brackets.
 		it("[valid/simple.json] SELECT dept, avg WHERE avg > 97", checkQuery);
