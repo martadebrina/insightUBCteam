@@ -254,7 +254,7 @@ export default class InsightFacade implements IInsightFacade {
 		if (where.LT) {
 			const [key, value]: [string, unknown] = Object.entries(where.LT)[0];
 			const param = key.split("_")[1];
-			console.log(param);
+			// console.log(param);
 			if (typeof value !== "number") {
 				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
 			}
@@ -271,7 +271,7 @@ export default class InsightFacade implements IInsightFacade {
 		if (where.EQ) {
 			const [key, value]: [string, unknown] = Object.entries(where.EQ)[0];
 			const param = key.split("_")[1];
-			console.log(param);
+			// console.log(param);
 			if (typeof value !== "number") {
 				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
 			}
@@ -288,7 +288,77 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleSComp(where: any, sections: Section[]): Promise<Section[]> {
-		return sections;
+		const [key, value]: [string, unknown] = Object.entries(where.IS)[0];
+		const param = key.split("_")[1];
+		// console.log(param);
+		if (typeof value !== "string") {
+			throw new InsightError(`Invalid value type for ${key}. Expected a string but got ${typeof value}`);
+		}
+		const a = sections.filter((s) => {
+			const valueType = this.getValueType(value);
+			const compareValue = this.getParamString(param, s);
+			if (valueType === "startend") {
+				const newString = value.slice(1, -1);
+				return compareValue.includes(newString);
+			} else if (valueType === "start") {
+				const newString = value.slice(1);
+				// console.log(newString);
+				return compareValue.endsWith(newString);
+			} else if (valueType === "end") {
+				const newString = value.slice(0, -1);
+				return compareValue.startsWith(newString);
+			} else if (valueType === "normal") {
+				return compareValue === value;
+			}
+		});
+		// console.log(a);
+		return a;
+	}
+
+	private getValueType(value: string): string {
+		if (value.startsWith("*") && value.endsWith("*")) {
+			const newString = value.slice(1, -1);
+			if (newString.includes("*")) {
+				throw new InsightError("");
+			}
+			return "startend";
+		} else if (value.startsWith("*")) {
+			const newString = value.slice(1);
+			if (newString.includes("*")) {
+				throw new InsightError("");
+			}
+			return "start";
+		} else if (value.endsWith("*")) {
+			const newString = value.slice(0, -1);
+			if (newString.includes("*")) {
+				throw new InsightError("");
+			}
+			return "end";
+		} else if (value.includes("*")) {
+			throw new InsightError("");
+		} else {
+			return "normal";
+		}
+	}
+
+	private getParamString(param: String, s: Section): string {
+		if (param === "uuid") {
+			return s.uuid;
+		}
+		if (param === "id") {
+			return s.id;
+		}
+		if (param === "title") {
+			return s.title;
+		}
+		if (param === "instructor") {
+			return s.instructor;
+		}
+		if (param === "dept") {
+			return s.dept;
+		}
+
+		throw new InsightError("no valid param");
 	}
 
 	private async handleLogicComp(where: any, sections: Section[]): Promise<Section[]> {
