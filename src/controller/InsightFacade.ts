@@ -187,7 +187,7 @@ export default class InsightFacade implements IInsightFacade {
 		if (!foundDataset) {
 			throw new InsightError("reference not found");
 		}
-		const filtered = await this.handleWhere(WHERE, foundDataset.sections);
+		const filtered = await this.handleWhere(WHERE, foundDataset.sections, queryId);
 
 		// handle OPTIONS
 		// const result = await this.handleOptions(OPTIONS, filtered);
@@ -209,7 +209,7 @@ export default class InsightFacade implements IInsightFacade {
 		return id;
 	}
 
-	private async handleWhere(where: any, sections: Section[]): Promise<Section[]> {
+	private async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		// Todo: traverse the BODY
 
 		// base case
@@ -218,27 +218,30 @@ export default class InsightFacade implements IInsightFacade {
 		}
 		if (where.AND || where.OR) {
 			// handle logic comp
-			return await this.handleLogicComp(where, sections);
+			return await this.handleLogicComp(where, sections, queryId);
 		}
 		if (where.NOT) {
-			// handle logic comp
-			return await this.handleNegation(where, sections);
+			return await this.handleNegation(where, sections, queryId);
 		}
 		if (where.IS) {
-			return await this.handleSComp(where, sections);
+			return await this.handleSComp(where, sections, queryId);
 		}
 		if (where.LT || where.GT || where.EQ) {
-			return await this.handleMComp(where, sections);
+			return await this.handleMComp(where, sections, queryId);
 		}
 
 		throw new InsightError("invalid ebnf");
 	}
 
-	private async handleMComp(where: any, sections: Section[]): Promise<Section[]> {
+	private async handleMComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		// now we have list of sections with ID yang dimau
 		if (where.GT) {
 			const [key, value]: [string, unknown] = Object.entries(where.GT)[0];
 			const param = key.split("_")[1];
+			const dataset = key.split("_")[0];
+			if (dataset !== queryId) {
+				throw new InsightError("");
+			}
 			if (typeof value !== "number") {
 				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
 			}
@@ -254,6 +257,10 @@ export default class InsightFacade implements IInsightFacade {
 		if (where.LT) {
 			const [key, value]: [string, unknown] = Object.entries(where.LT)[0];
 			const param = key.split("_")[1];
+			const dataset = key.split("_")[0];
+			if (dataset !== queryId) {
+				throw new InsightError("");
+			}
 			// console.log(param);
 			if (typeof value !== "number") {
 				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
@@ -271,6 +278,10 @@ export default class InsightFacade implements IInsightFacade {
 		if (where.EQ) {
 			const [key, value]: [string, unknown] = Object.entries(where.EQ)[0];
 			const param = key.split("_")[1];
+			const dataset = key.split("_")[0];
+			if (dataset !== queryId) {
+				throw new InsightError("");
+			}
 			// console.log(param);
 			if (typeof value !== "number") {
 				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
@@ -287,9 +298,13 @@ export default class InsightFacade implements IInsightFacade {
 		throw new InsightError("no m comp");
 	}
 
-	private async handleSComp(where: any, sections: Section[]): Promise<Section[]> {
+	private async handleSComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		const [key, value]: [string, unknown] = Object.entries(where.IS)[0];
 		const param = key.split("_")[1];
+		const dataset = key.split("_")[0];
+		if (dataset !== queryId) {
+			throw new InsightError("");
+		}
 		// console.log(param);
 		if (typeof value !== "string") {
 			throw new InsightError(`Invalid value type for ${key}. Expected a string but got ${typeof value}`);
@@ -361,14 +376,14 @@ export default class InsightFacade implements IInsightFacade {
 		throw new InsightError("no valid param");
 	}
 
-	private async handleLogicComp(where: any, sections: Section[]): Promise<Section[]> {
+	private async handleLogicComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		return sections;
 	}
 
-	private async handleNegation(where: any, sections: Section[]): Promise<Section[]> {
+	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		// filter the sections
 
-		const filteredSections = await this.handleWhere(where.NOT, sections);
+		const filteredSections = await this.handleWhere(where.NOT, sections, queryId);
 		return sections.filter((s: Section) => {
 			return !filteredSections.includes(s);
 		});
