@@ -5,101 +5,22 @@ import {
 	InsightResult,
 	NotFoundError,
 	InsightError,
+	ResultTooLargeError,
 } from "./IInsightFacade";
 import JSZip, { loadAsync } from "jszip";
 import * as fs from "fs-extra";
+import { Datasets, Section } from "./helperClass";
+import { HelperFunction } from "./helperFunction";
 // import * as path from "path";
-
-class Datasets {
-	// private datasetMap: Map<string, DatasetInfo>;
-
-	public sections: Section[];
-	public numRows: number;
-	public kind: InsightDatasetKind;
-
-	constructor() {
-		this.sections = [];
-		this.numRows = 0;
-		this.kind = InsightDatasetKind.Sections;
-	}
-
-	public addSection(newCourse: Section): void {
-		++this.numRows;
-		this.sections.push(newCourse);
-	}
-}
-
-class Section {
-	// private sectionList: any[];
-
-	public uuid: string;
-	public id: string;
-	public title: string;
-	public instructor: string;
-	public dept: string;
-	public year: number;
-	public avg: number;
-	public pass: number;
-	public fail: number;
-	public audit: number;
-
-	constructor(section: any) {
-		// check if section is valid
-		if (!this.isValidSection(section)) {
-			throw new InsightError("Undefined variable -> invalid section");
-		}
-		try {
-			this.uuid = String(section.id);
-			this.id = String(section.Course);
-			this.title = String(section.title);
-			this.instructor = String(section.Professor);
-			this.dept = String(section.Subject);
-			if (section.Section === "overall") {
-				this.year = 1900;
-			} else {
-				this.year = this.anyToNum(section.Year);
-			}
-			this.avg = this.anyToNum(section.Avg);
-			this.pass = this.anyToNum(section.Pass);
-			this.fail = this.anyToNum(section.Fail);
-			this.audit = this.anyToNum(section.Audit);
-		} catch (_err) {
-			throw new InsightError("invalid variable type");
-		}
-	}
-
-	public isValidSection(c: any): boolean {
-		return (
-			c.id === undefined ||
-			c.Course === undefined ||
-			c.title === undefined ||
-			c.Professor === undefined ||
-			c.Subject === undefined ||
-			c.Section === undefined ||
-			c.Year === undefined ||
-			c.Avg === undefined ||
-			c.Pass === undefined ||
-			c.Fail === undefined ||
-			c.Audit === undefined
-		);
-	}
-
-	public anyToNum(n: any): number {
-		const num = Number(n);
-		if (isNaN(num)) {
-			throw new InsightError("n is not a number");
-		}
-		return num;
-	}
-}
 
 export default class InsightFacade implements IInsightFacade {
 	private datasets = new Map<string, Datasets>();
+	private hf = new HelperFunction();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		await this.loadDatasetsFromDisk();
 
-		if (!this.isValidId(id)) {
+		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
 
@@ -132,7 +53,7 @@ export default class InsightFacade implements IInsightFacade {
 	public async removeDataset(id: string): Promise<string> {
 		await this.loadDatasetsFromDisk();
 
-		if (!this.isValidId(id)) {
+		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
 
@@ -180,7 +101,7 @@ export default class InsightFacade implements IInsightFacade {
 		}
 
 		// get id from first element of column
-		const queryId = await this.getQueryId(OPTIONS);
+		const queryId = await this.hf.getQueryId(OPTIONS);
 
 		const foundDataset = this.datasets.get(queryId);
 		// no dataset with id found
@@ -190,23 +111,9 @@ export default class InsightFacade implements IInsightFacade {
 		const filtered = await this.handleWhere(WHERE, foundDataset.sections, queryId);
 
 		// handle OPTIONS
-		// const result = await this.handleOptions(OPTIONS, filtered);
+		// const result = await this.handleOptions(OPTIONS, filtered, queryId);
 
-		throw new Error(`InsightFacadeImpl::performQuery() is unimplemented! - query=${query};`);
-	}
-
-	private async getQueryId(options: any): Promise<string> {
-		// TODO: return dataset id from first element of column
-		// check for no column and empty column
-		const columns = options.COLUMNS as any;
-		if (!columns) {
-			throw new InsightError("no columns");
-		}
-		if (columns.length === 0) {
-			throw new InsightError("column is empty");
-		}
-		const id = columns[0].split("_")[0];
-		return id;
+		return [];
 	}
 
 	private async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
@@ -235,63 +142,14 @@ export default class InsightFacade implements IInsightFacade {
 	private async handleMComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		// now we have list of sections with ID yang dimau
 		if (where.GT) {
-			const [key, value]: [string, unknown] = Object.entries(where.GT)[0];
-			const param = key.split("_")[1];
-			const dataset = key.split("_")[0];
-			if (dataset !== queryId) {
-				throw new InsightError("");
-			}
-			if (typeof value !== "number") {
-				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
-			}
-
-			if (isNaN(value)) {
-				throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
-			}
-
-			return sections.filter((s) => {
-				return this.getParamNum(param, s) > value;
-			});
+			return await this.hf.handleGreaterThan(where, sections, queryId);
 		}
 		if (where.LT) {
-			const [key, value]: [string, unknown] = Object.entries(where.LT)[0];
-			const param = key.split("_")[1];
-			const dataset = key.split("_")[0];
-			if (dataset !== queryId) {
-				throw new InsightError("");
-			}
-			// console.log(param);
-			if (typeof value !== "number") {
-				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
-			}
-
-			if (isNaN(value)) {
-				throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
-			}
-
-			return sections.filter((s) => {
-				return this.getParamNum(param, s) < value;
-			});
+			return await this.hf.handleLessThan(where, sections, queryId);
 		}
 
 		if (where.EQ) {
-			const [key, value]: [string, unknown] = Object.entries(where.EQ)[0];
-			const param = key.split("_")[1];
-			const dataset = key.split("_")[0];
-			if (dataset !== queryId) {
-				throw new InsightError("");
-			}
-			// console.log(param);
-			if (typeof value !== "number") {
-				throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
-			}
-
-			if (isNaN(value)) {
-				throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
-			}
-			return sections.filter((s) => {
-				return this.getParamNum(param, s) > value;
-			});
+			return await this.hf.handleEqual(where, sections, queryId);
 		}
 		throw new InsightError("no m comp");
 	}
@@ -308,8 +166,8 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError(`Invalid value type for ${key}. Expected a string but got ${typeof value}`);
 		}
 		const a = sections.filter((s) => {
-			const valueType = this.getValueType(value);
-			const compareValue = this.getParamString(param, s);
+			const valueType = this.hf.getValueType(value);
+			const compareValue = this.hf.getParamString(param, s);
 			if (valueType === "startend") {
 				const newString = value.slice(1, -1);
 				return compareValue.includes(newString);
@@ -328,54 +186,7 @@ export default class InsightFacade implements IInsightFacade {
 		return a;
 	}
 
-	private getValueType(value: string): string {
-		if (value.startsWith("*") && value.endsWith("*")) {
-			const newString = value.slice(1, -1);
-			if (newString.includes("*")) {
-				throw new InsightError("");
-			}
-			return "startend";
-		} else if (value.startsWith("*")) {
-			const newString = value.slice(1);
-			if (newString.includes("*")) {
-				throw new InsightError("");
-			}
-			return "start";
-		} else if (value.endsWith("*")) {
-			const newString = value.slice(0, -1);
-			if (newString.includes("*")) {
-				throw new InsightError("");
-			}
-			return "end";
-		} else if (value.includes("*")) {
-			throw new InsightError("");
-		} else {
-			return "normal";
-		}
-	}
-
-	private getParamString(param: String, s: Section): string {
-		if (param === "uuid") {
-			return s.uuid;
-		}
-		if (param === "id") {
-			return s.id;
-		}
-		if (param === "title") {
-			return s.title;
-		}
-		if (param === "instructor") {
-			return s.instructor;
-		}
-		if (param === "dept") {
-			return s.dept;
-		}
-
-		throw new InsightError("no valid param");
-	}
-
 	private async handleLogicComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-    
 		// where.LOGIC is an array, e.g. ( { AND: [ { GT: [Object] }, { IS: [Object] } ] } )
 		// therefore filteredSections in handleOr and handleAnd stores the result of each recursion of each branches inside the where.LOGIC
 
@@ -449,11 +260,6 @@ export default class InsightFacade implements IInsightFacade {
 		});
 	}
 
-	private isValidId(id: string): boolean {
-		const trimmedId = id.trim();
-		return trimmedId.length > 0 && !trimmedId.includes("_") && !trimmedId.includes(" ");
-	}
-
 	private async loadDatasetsFromDisk(): Promise<void> {
 		const exist = await fs.pathExists("./data/Datasets.json");
 
@@ -520,24 +326,5 @@ export default class InsightFacade implements IInsightFacade {
 		await fs.ensureDir("./data");
 
 		await fs.writeJSON("./data/Datasets.json", datasetsArray);
-	}
-
-	private getParamNum(param: String, s: Section): number {
-		if (param === "year") {
-			return s.year;
-		}
-		if (param === "avg") {
-			return s.avg;
-		}
-		if (param === "pass") {
-			return s.pass;
-		}
-		if (param === "fail") {
-			return s.year;
-		}
-		if (param === "audit") {
-			return s.audit;
-		}
-		throw new InsightError();
 	}
 }
