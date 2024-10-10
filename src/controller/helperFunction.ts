@@ -21,6 +21,40 @@ export class HelperFunction {
 		throw new InsightError();
 	}
 
+	public getParamAll(param: String, s: Section): number | string {
+		if (param === "year") {
+			return s.year;
+		}
+		if (param === "avg") {
+			return s.avg;
+		}
+		if (param === "pass") {
+			return s.pass;
+		}
+		if (param === "fail") {
+			return s.fail;
+		}
+		if (param === "audit") {
+			return s.audit;
+		}
+		if (param === "uuid") {
+			return s.uuid;
+		}
+		if (param === "id") {
+			return s.id;
+		}
+		if (param === "title") {
+			return s.title;
+		}
+		if (param === "instructor") {
+			return s.instructor;
+		}
+		if (param === "dept") {
+			return s.dept;
+		}
+		throw new InsightError();
+	}
+
 	public async getQueryId(options: any): Promise<string> {
 		// TODO: return dataset id from first element of column
 		// check for no column and empty column

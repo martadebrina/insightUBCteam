@@ -141,7 +141,7 @@ export default class InsightFacade implements IInsightFacade {
 
 	private async handleOptions(options: any, filtered: Section[], queryId: string): Promise<InsightResult[]> {
 		const columns = options.COLUMNS;
-		// const order = options.ORDER;
+		const order = options.ORDER;
 
 		// const ds1 = columns[0];
 		// const ds2 = columns[1];
@@ -157,33 +157,37 @@ export default class InsightFacade implements IInsightFacade {
 				if (datasetId !== queryId) {
 					throw new InsightError("invalid dataset");
 				}
-				result[col] = this.hf.getParamString(field, section);
+				result[col] = this.hf.getParamAll(field, section);
 				//console.log(result[col]);
 			});
 			return result;
 		});
 
 		// If ORDER exists, sort the results
-		// if (order) {
-		// 	if (typeof order === "string") {
-		// 		// Sort by a single field
-		// 		results.sort((a, b) => (a[order] > b[order] ? 1 : -1));
-		// 	} else if (typeof order === "object" && order.keys) {
-		// 		// Sort by multiple fields, with an optional direction
-		// 		const { keys, dir } = order;
-		// 		const direction = dir === "DOWN" ? -1 : 1;
+		if (order) {
+			if (typeof order === "string") {
+				// Sort by a single field
+				results.sort((a, b) => (a[order] > b[order] ? 1 : -1));
+			} else if (typeof order === "object" && order.keys) {
+				// Sort by multiple fields, with an optional direction
+				const { keys, dir } = order;
+				const direction = dir === "DOWN" ? -1 : 1;
 
-		// 		results.sort((a, b) => {
-		// 			for (const key of keys) {
-		// 				if (a[key] > b[key]) return direction;
-		// 				if (a[key] < b[key]) return -direction;
-		// 			}
-		// 			return 0;
-		// 		});
-		// 	} else {
-		// 		throw new InsightError("Invalid ORDER in OPTIONS");
-		// 	}
-		// }
+				results.sort((a, b) => {
+					for (const key of keys) {
+						if (a[key] > b[key]) {
+							return direction;
+						}
+						if (a[key] < b[key]) {
+							return -direction;
+						}
+					}
+					return 0;
+				});
+			} else {
+				throw new InsightError("Invalid ORDER in OPTIONS");
+			}
+		}
 
 		return results;
 	}
