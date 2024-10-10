@@ -13,7 +13,7 @@ export class HelperFunction {
 			return s.pass;
 		}
 		if (param === "fail") {
-			return s.year;
+			return s.fail;
 		}
 		if (param === "audit") {
 			return s.audit;
