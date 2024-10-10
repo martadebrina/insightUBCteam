@@ -211,7 +211,6 @@ export default class InsightFacade implements IInsightFacade {
 
 	private async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		// Todo: traverse the BODY
-
 		// base case
 		if (where.length === 0) {
 			return sections;
@@ -294,7 +293,6 @@ export default class InsightFacade implements IInsightFacade {
 				return this.getParamNum(param, s) > value;
 			});
 		}
-
 		throw new InsightError("no m comp");
 	}
 
@@ -377,7 +375,69 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleLogicComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		return sections;
+    
+		// where.LOGIC is an array, e.g. ( { AND: [ { GT: [Object] }, { IS: [Object] } ] } )
+		// therefore filteredSections in handleOr and handleAnd stores the result of each recursion of each branches inside the where.LOGIC
+
+		if (where.OR) {
+			return this.handleOr(where, sections, queryId);
+		}
+
+		if (where.AND) {
+			return this.handleAnd(where, sections, queryId);
+		}
+
+		throw new InsightError(`Invalid logical operator: ${where[0]}`);
+	}
+
+	private async handleOr(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+		const filteredSections: any[] = [];
+		const orArrLength = where.OR.length;
+
+		// fill in with the result of each recursion
+		for (let i = 0; i < orArrLength; i++) {
+			filteredSections[i] = this.handleWhere(where.OR[i], sections, queryId);
+		}
+		await Promise.all(filteredSections);
+
+		// check whether the section is found in one of the filteredSections members
+		function sectionChecker(s: Section): boolean {
+			for (let i = 0; i < orArrLength; i++) {
+				if (filteredSections[i].includes(s)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		return sections.filter((s: Section) => {
+			return sectionChecker(s);
+		});
+	}
+
+	private async handleAnd(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+		const filteredSections: any[] = [];
+		const andArrLength = where.AND.length;
+
+		// fill in with the result of each recursion
+		for (let i = 0; i < andArrLength; i++) {
+			filteredSections[i] = this.handleWhere(where.AND[i], sections, queryId);
+		}
+		await Promise.all(filteredSections);
+
+		// check whether the section is found in all of the filteredSections members
+		function sectionChecker(s: Section): boolean {
+			for (let i = 0; i < andArrLength; i++) {
+				if (!filteredSections[i].includes(s)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		return sections.filter((s: Section) => {
+			return sectionChecker(s);
+		});
 	}
 
 	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
