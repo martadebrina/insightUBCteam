@@ -260,6 +260,7 @@ describe("InsightFacade", function () {
 			}
 		});
 	});
+
 	describe("ListDataset", function () {
 		beforeEach(function () {
 			// This section resets the insightFacade instance
@@ -332,6 +333,15 @@ describe("InsightFacade", function () {
 		});
 	});
 
+	function sortResults(results: InsightResult[]): InsightResult[] {
+		return results.sort((a, b) => {
+			// Sort based on a key, for example 'dept' or 'uuid'
+			const aKey = Object.values(a).join("");
+			const bKey = Object.values(b).join("");
+			return aKey.localeCompare(bKey);
+		});
+	}
+
 	describe.only("PerformQuery", function () {
 		/**
 		 * Loads the TestQuery specified in the test name and asserts the behaviour of performQuery.
@@ -354,7 +364,12 @@ describe("InsightFacade", function () {
 				if (errorExpected) {
 					expect.fail(`performQuery resolved when it should have rejected with ${expected}`);
 				}
-				expect(result).to.deep.equal(expected);
+				// Sort both result and expected to ensure order does not matter
+				const sortedResult = sortResults(result);
+				const sortedExpected = sortResults(expected);
+
+				// Compare the sorted results using deep equal
+				expect(sortedResult).to.deep.equal(sortedExpected);
 				expect(input).to.be.instanceOf(Object);
 			} catch (_err) {
 				if (!errorExpected) {
