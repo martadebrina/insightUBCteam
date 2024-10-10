@@ -92,6 +92,7 @@ describe("InsightFacade", function () {
 				expect(err).to.be.instanceOf(InsightError);
 			}
 		});
+
 		it("should reject with  an empty dataset id", async function () {
 			try {
 				await facade.addDataset("", sections, InsightDatasetKind.Sections);
@@ -330,7 +331,8 @@ describe("InsightFacade", function () {
 			}
 		});
 	});
-	describe("PerformQuery", function () {
+
+	describe.only("PerformQuery", function () {
 		/**
 		 * Loads the TestQuery specified in the test name and asserts the behaviour of performQuery.
 		 *

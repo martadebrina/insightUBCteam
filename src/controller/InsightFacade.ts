@@ -211,7 +211,6 @@ export default class InsightFacade implements IInsightFacade {
 
 	private async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
 		// Todo: traverse the BODY
-		// console.log(where);
 		// base case
 		if (where.length === 0) {
 			return sections;
@@ -294,7 +293,6 @@ export default class InsightFacade implements IInsightFacade {
 				return this.getParamNum(param, s) > value;
 			});
 		}
-
 		throw new InsightError("no m comp");
 	}
 
@@ -377,6 +375,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleLogicComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+    
 		// where.LOGIC is an array, e.g. ( { AND: [ { GT: [Object] }, { IS: [Object] } ] } )
 		// therefore filteredSections in handleOr and handleAnd stores the result of each recursion of each branches inside the where.LOGIC
 
