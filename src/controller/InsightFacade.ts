@@ -232,6 +232,10 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleSComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+		if (Object.keys(where.IS).length === 0) {
+			throw new InsightError("Invalid Query Syntax for IS");
+		}
+
 		const [key, value]: [string, unknown] = Object.entries(where.IS)[0];
 		const param = key.split("_")[1];
 		const dataset = key.split("_")[0];
@@ -279,6 +283,10 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleOr(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+		if (where.OR.length === 0) {
+			throw new InsightError("Invalid Query Syntax");
+		}
+
 		const orPromises = where.OR.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
 
 		const filteredSections = await Promise.all(orPromises);
@@ -306,6 +314,10 @@ export default class InsightFacade implements IInsightFacade {
 		// for (let i = 0; i < andArrLength; i++) {
 		// 	filteredSections[i] = this.handleWhere(where.AND[i], sections, queryId);
 		// }
+
+		if (where.AND.length === 0) {
+			throw new InsightError("Invalid Query Syntax");
+		}
 
 		const andPromises = where.AND.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
 

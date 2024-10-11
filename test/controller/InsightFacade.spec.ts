@@ -405,6 +405,10 @@ describe("InsightFacade", function () {
 		// The relative path to the query file must be given in square brackets.
 		it("[valid/simple.json] SELECT dept, avg WHERE avg > 97", checkQuery);
 		it("[invalid/invalid.json] Query missing WHERE", checkQuery);
+		it("[invalid/invalidand.json] Query missing AND", checkQuery);
+		it("[invalid/invalidor.json] Query missing OR", checkQuery);
+		it("[invalid/invalidscomp.json] Query missing IS", checkQuery);
+		//it("[invalid/invalidnegation.json] Query missing NOT", checkQuery);
 		it(
 			"[invalid/asteriskmiddle.json] SELECT dept, instructor WHERE instructor contains asterisk in the middle",
 			checkQuery

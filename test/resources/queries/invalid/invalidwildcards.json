@@ -1,5 +1,5 @@
 {
-	"title": "and combined with wildcard",
+	"title": "and combined with wildcard but wildcard error",
 	"input": {
 		"WHERE": {
 			"AND": [
