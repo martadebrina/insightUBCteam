@@ -90,8 +90,6 @@ export default class InsightFacade implements IInsightFacade {
 		// load from disk
 		await this.loadDatasetsFromDisk();
 
-		// console.log(query);
-
 		// go through the query (from chatGPT)
 		const { WHERE, OPTIONS } = query as any;
 
@@ -118,13 +116,17 @@ export default class InsightFacade implements IInsightFacade {
 		const queryId = await this.hf.getQueryId(OPTIONS);
 
 		const foundDataset = this.datasets.get(queryId);
+
 		// no dataset with id found
 		if (!foundDataset) {
 			throw new InsightError("reference not found");
 		}
+
 		const filtered = await this.handleWhere(WHERE, foundDataset.sections, queryId);
 
-		// console.log(filtered);
+		if (filtered.length === 0) {
+			return [];
+		}
 
 		// handle OPTIONS
 		const result = await this.handleOptions(OPTIONS, filtered, queryId);
@@ -134,7 +136,6 @@ export default class InsightFacade implements IInsightFacade {
 		if (result.length > limit) {
 			throw new ResultTooLargeError("result too large");
 		}
-		//console.log(result);
 
 		return result;
 	}
@@ -142,14 +143,9 @@ export default class InsightFacade implements IInsightFacade {
 	private async handleOptions(options: any, filtered: Section[], queryId: string): Promise<InsightResult[]> {
 		const columns = options.COLUMNS;
 		const order = options.ORDER;
+		const columnParam: String[] = [];
 
-		// const ds1 = columns[0];
-		// const ds2 = columns[1];
-		// if (ds1.split("_")[0] !== ds2.split("_")[0]) {
-		// 	throw new InsightError("multiple dataset in column");
-		// }
-
-		// Map filtered sections to the required columns
+		// map filtered sections to the required columns
 		const results: InsightResult[] = filtered.map((section) => {
 			const result: any = {};
 			columns.forEach((col: string) => {
@@ -157,45 +153,50 @@ export default class InsightFacade implements IInsightFacade {
 				if (datasetId !== queryId) {
 					throw new InsightError("invalid dataset");
 				}
+				columnParam.push(field);
 				result[col] = this.hf.getParamAll(field, section);
-				//console.log(result[col]);
 			});
 			return result;
 		});
 
 		// If ORDER exists, sort the results
 		if (order) {
-			if (typeof order === "string") {
-				// Sort by a single field
-				results.sort((a, b) => (a[order] > b[order] ? 1 : -1));
-			} else if (typeof order === "object" && order.keys) {
-				// Sort by multiple fields, with an optional direction
-				const { keys, dir } = order;
-				const direction = dir === "DOWN" ? -1 : 1;
-
-				results.sort((a, b) => {
-					for (const key of keys) {
-						if (a[key] > b[key]) {
-							return direction;
-						}
-						if (a[key] < b[key]) {
-							return -direction;
-						}
-					}
-					return 0;
-				});
-			} else {
-				throw new InsightError("Invalid ORDER in OPTIONS");
-			}
+			this.sortResults(results, order, queryId, columnParam);
 		}
 
 		return results;
 	}
 
+	private sortResults(results: InsightResult[], order: string, queryId: string, columnParam: String[]): void {
+		if (typeof order !== "string") {
+			throw new InsightError("Invalid order key");
+		}
+
+		const [dataset, orderParam] = order.split("_");
+		if (dataset !== queryId) {
+			throw new InsightError("Invalid dataset");
+		}
+		if (!columnParam.includes(orderParam)) {
+			throw new InsightError("");
+		}
+
+		results.sort((a, b) => {
+			const aValue = a[order];
+			const bValue = b[order];
+
+			if (typeof aValue === "string" && typeof bValue === "string") {
+				return aValue.localeCompare(bValue); // Lexical comparison for strings
+			} else if (typeof aValue === "number" && typeof bValue === "number") {
+				return aValue - bValue; // Numeric comparison for numbers
+			} else {
+				throw new InsightError("Cannot compare values of different types");
+			}
+		});
+	}
+
 	private async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// Todo: traverse the BODY
 		// base case
-		if (where.length === 0) {
+		if (Object.keys(where).length === 0) {
 			return sections;
 		}
 		if (where.AND || where.OR) {
@@ -237,7 +238,7 @@ export default class InsightFacade implements IInsightFacade {
 		if (dataset !== queryId) {
 			throw new InsightError("");
 		}
-		//console.log(value);
+
 		if (typeof value !== "string") {
 			throw new InsightError("invalid skey");
 		}
@@ -258,7 +259,7 @@ export default class InsightFacade implements IInsightFacade {
 				return compareValue === value;
 			}
 		});
-		//console.log(a);
+
 		return a;
 	}
 
@@ -278,9 +279,9 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleOr(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		const andPromises = where.AND.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
+		const orPromises = where.OR.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
 
-		const filteredSections = await Promise.all(andPromises);
+		const filteredSections = await Promise.all(orPromises);
 
 		// check whether the section is found in one of the filteredSections members
 		function sectionChecker(s: Section): boolean {
@@ -355,7 +356,6 @@ export default class InsightFacade implements IInsightFacade {
 			newData.kind = dataset.kind;
 			this.datasets.set(id, newData);
 		}
-		// console.log(this.datasets);
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {
