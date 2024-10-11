@@ -137,6 +137,8 @@ export default class InsightFacade implements IInsightFacade {
 			throw new ResultTooLargeError("result too large");
 		}
 
+		// console.log(result);
+
 		return result;
 	}
 
@@ -255,7 +257,7 @@ export default class InsightFacade implements IInsightFacade {
 			} else if (valueType === "end") {
 				const newString = value.slice(0, -1);
 				return compareValue.startsWith(newString);
-			} else if (valueType === "normal") {
+			} else {
 				return compareValue === value;
 			}
 		});
@@ -310,6 +312,8 @@ export default class InsightFacade implements IInsightFacade {
 		const andPromises = where.AND.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
 
 		const filteredSections = await Promise.all(andPromises);
+
+		// console.log(filteredSections);
 
 		// check whether the section is found in all of the filteredSections members
 		// function sectionChecker(s: Section): boolean {
