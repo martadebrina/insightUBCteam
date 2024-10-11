@@ -78,23 +78,23 @@ export class HelperFunction {
 		if (value.startsWith("*") && value.endsWith("*")) {
 			const newString = value.slice(1, -1);
 			if (newString.includes("*")) {
-				throw new InsightError("");
+				throw new InsightError("Invalid wildcards filter: * found in the middle");
 			}
 			return "startend";
 		} else if (value.startsWith("*")) {
 			const newString = value.slice(1);
 			if (newString.includes("*")) {
-				throw new InsightError("");
+				throw new InsightError("Invalid wildcards filter: * found in the middle");
 			}
 			return "start";
 		} else if (value.endsWith("*")) {
 			const newString = value.slice(0, -1);
 			if (newString.includes("*")) {
-				throw new InsightError("");
+				throw new InsightError("Invalid wildcards filter: * found in the middle");
 			}
 			return "end";
 		} else if (value.includes("*")) {
-			throw new InsightError("");
+			throw new InsightError("Invalid wildcards filter: * found in the middle");
 		} else {
 			return "normal";
 		}
