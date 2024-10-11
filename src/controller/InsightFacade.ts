@@ -137,6 +137,8 @@ export default class InsightFacade implements IInsightFacade {
 			throw new ResultTooLargeError("result too large");
 		}
 
+		// console.log(result);
+
 		return result;
 	}
 
@@ -255,7 +257,7 @@ export default class InsightFacade implements IInsightFacade {
 			} else if (valueType === "end") {
 				const newString = value.slice(0, -1);
 				return compareValue.startsWith(newString);
-			} else if (valueType === "normal") {
+			} else {
 				return compareValue === value;
 			}
 		});
@@ -311,19 +313,19 @@ export default class InsightFacade implements IInsightFacade {
 
 		const filteredSections = await Promise.all(andPromises);
 
-		// check whether the section is found in all of the filteredSections members
-		function sectionChecker(s: Section): boolean {
-			for (const x of filteredSections) {
-				if (!x.includes(s)) {
-					return false;
-				}
-			}
-			return true;
-		}
+		// console.log(filteredSections);
 
-		return sections.filter((s: Section) => {
-			return sectionChecker(s);
-		});
+		// check whether the section is found in all of the filteredSections members
+		// function sectionChecker(s: Section): boolean {
+		// 	for (const x of filteredSections) {
+		// 		if (!x.includes(s)) {
+		// 			return false;
+		// 		}
+		// 	}
+		// 	return true;
+		// }
+
+		return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section)));
 	}
 
 	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
