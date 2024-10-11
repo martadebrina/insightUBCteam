@@ -274,11 +274,11 @@ export default class InsightFacade implements IInsightFacade {
 		// therefore filteredSections in handleOr and handleAnd stores the result of each recursion of each branches inside the where.LOGIC
 
 		if (where.OR) {
-			return await this.handleOr(where, sections, queryId);
+			return this.handleOr(where, sections, queryId);
 		}
 
 		if (where.AND) {
-			return await this.handleAnd(where, sections, queryId);
+			return this.handleAnd(where, sections, queryId);
 		}
 
 		throw new InsightError(`Invalid logical operator: ${where[0]}`);
@@ -348,89 +348,6 @@ export default class InsightFacade implements IInsightFacade {
 			return !filteredSections.includes(s);
 		});
 	}
-
-	private async handleOptions(options: any, sections: Section[], queryId: string): Promise<InsightResult[]> {
-		const columns = options.COLUMNS;
-		const fields: string[] = [];
-	
-		// Step 1: Project the results (keep only fields in COLUMNS)
-		const projectedResults = sections.map((section) => {
-			const result: InsightResult = {};
-			columns.forEach((col: string) => {
-				const [id, field] = col.split("_");
-	
-				// Check that the id in the columns matches the query id
-				if (id !== queryId) {
-					throw new InsightError(`Invalid column reference: ${col} (expected dataset id: ${queryId})`);
-				}
-				if (!fields.includes(field)) {
-					fields.push(field);
-				}
-	
-				// Copy the value of the field from the section
-				result[col] = this.getParamValue(field, section);
-			});
-			return result;
-		});
-
-		// console.log(projectedResults);
-	
-		// Step 2: Handle ORDER, if specified
-		if (options.ORDER) {
-			const orderKey = options.ORDER;
-			const [id, field] = orderKey.split("_");
-	
-			// Check that the order key refers to the correct dataset
-			if (id !== queryId) {
-				throw new InsightError(`Invalid order reference: ${orderKey} (expected dataset id: ${queryId})`);
-			}
-
-			if (!fields.includes(field)) {
-				throw new InsightError("");
-			}
-	
-			// Sort the results based on the order key
-			projectedResults.sort((a, b) => {
-				const valueA = a[orderKey];
-				const valueB = b[orderKey];
-	
-				if (valueA < valueB) return -1;
-				if (valueA > valueB) return 1;
-				return 0;
-			});
-		}
-	
-		return projectedResults;
-	}
-	
-
-	private getParamValue(field: string, section: Section): string | number {
-		switch (field) {
-			case "uuid":
-				return section.uuid;
-			case "id":
-				return section.id;
-			case "title":
-				return section.title;
-			case "instructor":
-				return section.instructor;
-			case "dept":
-				return section.dept;
-			case "year":
-				return section.year;
-			case "avg":
-				return section.avg;
-			case "pass":
-				return section.pass;
-			case "fail":
-				return section.fail;
-			case "audit":
-				return section.audit;
-			default:
-				throw new InsightError(`Invalid field: ${field}`);
-		}
-	}
-	
 
 	private async loadDatasetsFromDisk(): Promise<void> {
 		const exist = await fs.pathExists("./data/Datasets.json");

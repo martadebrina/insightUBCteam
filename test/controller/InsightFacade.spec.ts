@@ -369,6 +369,7 @@ describe("InsightFacade", function () {
 				const sortedExpected = sortResults(expected);
 
 				// Compare the sorted results using deep equal
+				// console.log(result);
 				expect(sortedResult).to.deep.equal(sortedExpected);
 				expect(input).to.be.instanceOf(Object);
 			} catch (_err) {
@@ -408,7 +409,7 @@ describe("InsightFacade", function () {
 		it("[invalid/invalidand.json] Query missing AND", checkQuery);
 		it("[invalid/invalidor.json] Query missing OR", checkQuery);
 		it("[invalid/invalidscomp.json] Query missing IS", checkQuery);
-		//it("[invalid/invalidnegation.json] Query missing NOT", checkQuery);
+		// it("[invalid/invalidnegation.json] Query missing NOT", checkQuery);
 		it(
 			"[invalid/asteriskmiddle.json] SELECT dept, instructor WHERE instructor contains asterisk in the middle",
 			checkQuery
@@ -454,5 +455,6 @@ describe("InsightFacade", function () {
 		it("[invalid/orderfail.json] order not in column", checkQuery);
 		it("[invalid/invalidmkey.json] wrong m key", checkQuery);
 		it("[invalid/invalidskey.json] wrong s key", checkQuery);
+		it("[valid/matchingwildcards.json] matching wildcards", checkQuery);
 	});
 });

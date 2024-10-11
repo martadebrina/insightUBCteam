@@ -41,7 +41,7 @@ export class Section {
 		try {
 			this.uuid = String(section.id);
 			this.id = String(section.Course);
-			this.title = String(section.title);
+			this.title = String(section.Title);
 			this.instructor = String(section.Professor);
 			this.dept = String(section.Subject);
 			if (section.Section === "overall") {
