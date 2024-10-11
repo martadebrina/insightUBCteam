@@ -1,18 +1,66 @@
 {
-    "title": "SELECT dept, instructor WHERE instructor contains asterisk in the end",
-    "input": {
-        "WHERE": {
-            "IS": {
-                "sections_instructor": "rich*"
-            }
-        },
-        "OPTIONS": {
-            "COLUMNS": [
-                "sections_dept",
-                "sections_instructor"
-            ]
-        }
-    },
-    "errorExpected": false,
-    "expected": [{"sections_dept":"astr","sections_instructor":"richer, harvey;samra, raminder"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"astr","sections_instructor":"richer, harvey"},{"sections_dept":"audi","sections_instructor":"richards, rachel"},{"sections_dept":"audi","sections_instructor":"richards, rachel"},{"sections_dept":"audi","sections_instructor":"richards, rachel"},{"sections_dept":"audi","sections_instructor":"richards, rachel"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey;taylor, jared"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey"},{"sections_dept":"biol","sections_instructor":"richards, jeffrey"},{"sections_dept":"dent","sections_instructor":"richman, joy marion;yen, edwin h"},{"sections_dept":"eced","sections_instructor":"richardson, catherine"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"frst","sections_instructor":"richardson, john"},{"sections_dept":"geog","sections_instructor":"richardson, kathrine eileen"},{"sections_dept":"geog","sections_instructor":"richardson, kathrine eileen"},{"sections_dept":"hist","sections_instructor":"richardson, alan walter"},{"sections_dept":"hist","sections_instructor":"richardson, alan walter"},{"sections_dept":"math","sections_instructor":"richmond, edward"},{"sections_dept":"math","sections_instructor":"richmond, edward"},{"sections_dept":"math","sections_instructor":"richmond, edward"},{"sections_dept":"math","sections_instructor":"richmond, edward"},{"sections_dept":"spha","sections_instructor":"richardson, chris"},{"sections_dept":"spha","sections_instructor":"richardson, chris"},{"sections_dept":"spph","sections_instructor":"richardson, chris;sandhu, jat"},{"sections_dept":"spph","sections_instructor":"richardson, chris"},{"sections_dept":"spph","sections_instructor":"richardson, chris;sandhu, jat"},{"sections_dept":"spph","sections_instructor":"richardson, chris;sandhu, jat"},{"sections_dept":"spph","sections_instructor":"richardson, chris;sandhu, jat"},{"sections_dept":"spph","sections_instructor":"richardson, chris;sandhu, jat"}]
+	"title": "SELECT dept, instructor WHERE instructor contains asterisk in the end",
+	"input": {
+		"WHERE": {
+			"IS": {
+				"sections_instructor": "rich*"
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": ["sections_dept", "sections_instructor"]
+		}
+	},
+	"errorExpected": false,
+	"expected": [
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey;samra, raminder" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "astr", "sections_instructor": "richer, harvey" },
+		{ "sections_dept": "audi", "sections_instructor": "richards, rachel" },
+		{ "sections_dept": "audi", "sections_instructor": "richards, rachel" },
+		{ "sections_dept": "audi", "sections_instructor": "richards, rachel" },
+		{ "sections_dept": "audi", "sections_instructor": "richards, rachel" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey;taylor, jared" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey" },
+		{ "sections_dept": "biol", "sections_instructor": "richards, jeffrey" },
+		{ "sections_dept": "dent", "sections_instructor": "richman, joy marion;yen, edwin h" },
+		{ "sections_dept": "eced", "sections_instructor": "richardson, catherine" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "frst", "sections_instructor": "richardson, john" },
+		{ "sections_dept": "geog", "sections_instructor": "richardson, kathrine eileen" },
+		{ "sections_dept": "geog", "sections_instructor": "richardson, kathrine eileen" },
+		{ "sections_dept": "hist", "sections_instructor": "richardson, alan walter" },
+		{ "sections_dept": "hist", "sections_instructor": "richardson, alan walter" },
+		{ "sections_dept": "math", "sections_instructor": "richmond, edward" },
+		{ "sections_dept": "math", "sections_instructor": "richmond, edward" },
+		{ "sections_dept": "math", "sections_instructor": "richmond, edward" },
+		{ "sections_dept": "math", "sections_instructor": "richmond, edward" },
+		{ "sections_dept": "spha", "sections_instructor": "richardson, chris" },
+		{ "sections_dept": "spha", "sections_instructor": "richardson, chris" },
+		{ "sections_dept": "spph", "sections_instructor": "richardson, chris;sandhu, jat" },
+		{ "sections_dept": "spph", "sections_instructor": "richardson, chris" },
+		{ "sections_dept": "spph", "sections_instructor": "richardson, chris;sandhu, jat" },
+		{ "sections_dept": "spph", "sections_instructor": "richardson, chris;sandhu, jat" },
+		{ "sections_dept": "spph", "sections_instructor": "richardson, chris;sandhu, jat" },
+		{ "sections_dept": "spph", "sections_instructor": "richardson, chris;sandhu, jat" }
+	]
 }

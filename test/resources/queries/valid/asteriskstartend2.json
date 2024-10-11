@@ -1,0 +1,57 @@
+{
+	"title": "SELECT dept, instructor WHERE instructor contains asterisk at start and end",
+	"input": {
+		"WHERE": {
+			"IS": {
+				"sections_instructor": "*leck, f*"
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": ["sections_dept", "sections_instructor"]
+		}
+	},
+	"errorExpected": false,
+	"expected": [
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;boschma, geertje;brown, helen jean;foster, paula;jackson, cathryn;mcburney, sheila mary;rea, gail;thorne, sally"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;foster, paula;jackson, cathryn;jetha, farah;mcburney, sheila mary;rea, gail;segaric, cheryl"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;esson, lynne;foster, paula;jackson, cathryn;marshall, helga;taverner, tarnia"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;esson, lynne;foster, paula;jackson, cathryn;mann, dalbir;marshall, helga;mislang, jonathan;polyhronopoulos, nancy;taverner, tarnia"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;esson, lynne;foster, paula;jackson, cathryn;mann, dalbir;marshall, helga;mislang, jonathan;polyhronopoulos, nancy;taverner, tarnia"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;esson, lynne;foster, paula;jackson, cathryn;mann, dalbir;mislang, jonathan;taverner, tarnia;valkenier, beverley"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;esson, lynne;foster, paula;jackson, cathryn;marshall, helga;taverner, tarnia"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;esson, lynne;jackson, cathryn;mann, dalbir;marshall, helga;mislang, jonathan;taverner, tarnia;valkenier, beverley"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;jackson, cathryn;marshall, helga;oliffe, john;valkenier, beverley"
+		},
+		{
+			"sections_dept": "nurs",
+			"sections_instructor": "affleck, frances;esson, lynne;jackson, cathryn;mislang, jonathan;oliffe, john;rea, gail;valkenier, beverley"
+		},
+		{ "sections_dept": "nurs", "sections_instructor": "affleck, frances;oliffe, john" }
+	]
+}

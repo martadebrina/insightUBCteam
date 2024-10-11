@@ -312,18 +312,16 @@ export default class InsightFacade implements IInsightFacade {
 		const filteredSections = await Promise.all(andPromises);
 
 		// check whether the section is found in all of the filteredSections members
-		function sectionChecker(s: Section): boolean {
-			for (const x of filteredSections) {
-				if (!x.includes(s)) {
-					return false;
-				}
-			}
-			return true;
-		}
+		// function sectionChecker(s: Section): boolean {
+		// 	for (const x of filteredSections) {
+		// 		if (!x.includes(s)) {
+		// 			return false;
+		// 		}
+		// 	}
+		// 	return true;
+		// }
 
-		return sections.filter((s: Section) => {
-			return sectionChecker(s);
-		});
+		return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section)));
 	}
 
 	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {

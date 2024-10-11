@@ -1,18 +1,49 @@
 {
-    "title": "SELECT dept, instructor WHERE instructor contains asterisk in the start",
-    "input": {
-        "WHERE": {
-            "IS": {
-                "sections_instructor": "*rich"
-            }
-        },
-        "OPTIONS": {
-            "COLUMNS": [
-                "sections_dept",
-                "sections_instructor"
-            ]
-        }
-    },
-    "errorExpected": false,
-    "expected": [{"sections_dept":"eosc","sections_instructor":"eberhardt, erik;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"austin, philip;harris, sara;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"beckie, roger;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"atkin, steve;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"atkin, steve;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"beckie, roger;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"beckie, roger;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"beckie, roger;mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"hungr, oldrich"},{"sections_dept":"eosc","sections_instructor":"mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"mayer, ulrich"},{"sections_dept":"eosc","sections_instructor":"beckie, roger;mayer, ulrich"},{"sections_dept":"phys","sections_instructor":"vogt, erich"},{"sections_dept":"phys","sections_instructor":"vogt, erich"}]
+	"title": "SELECT dept, instructor WHERE instructor contains asterisk in the start",
+	"input": {
+		"WHERE": {
+			"IS": {
+				"sections_instructor": "*rich"
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": ["sections_dept", "sections_instructor"]
+		}
+	},
+	"errorExpected": false,
+	"expected": [
+		{ "sections_dept": "eosc", "sections_instructor": "eberhardt, erik;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "austin, philip;harris, sara;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "beckie, roger;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "atkin, steve;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "atkin, steve;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "beckie, roger;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "beckie, roger;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "beckie, roger;mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "hungr, oldrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "mayer, ulrich" },
+		{ "sections_dept": "eosc", "sections_instructor": "beckie, roger;mayer, ulrich" },
+		{ "sections_dept": "phys", "sections_instructor": "vogt, erich" },
+		{ "sections_dept": "phys", "sections_instructor": "vogt, erich" }
+	]
 }

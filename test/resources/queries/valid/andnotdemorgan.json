@@ -1,0 +1,41 @@
+{
+	"title": "and not comparator de morgan",
+	"input": {
+		"WHERE": {
+			"NOT": {
+				"OR": [
+					{
+						"LT": {
+							"sections_avg": 93
+						}
+					},
+					{
+						"NOT": {
+							"IS": {
+								"sections_dept": "cpsc"
+							}
+						}
+					},
+					{
+						"GT": {
+							"sections_avg": 94
+						}
+					}
+				]
+			}
+		},
+		"OPTIONS": {
+			"COLUMNS": ["sections_dept", "sections_avg"],
+			"ORDER": "sections_avg"
+		}
+	},
+	"errorExpected": false,
+	"expected": [
+		{ "sections_dept": "cpsc", "sections_avg": 93.38 },
+		{ "sections_dept": "cpsc", "sections_avg": 93.38 },
+		{ "sections_dept": "cpsc", "sections_avg": 93.5 },
+		{ "sections_dept": "cpsc", "sections_avg": 93.5 },
+		{ "sections_dept": "cpsc", "sections_avg": 94 },
+		{ "sections_dept": "cpsc", "sections_avg": 94 }
+	]
+}

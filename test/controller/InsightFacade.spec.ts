@@ -409,6 +409,10 @@ describe("InsightFacade", function () {
 			"[invalid/asteriskmiddle.json] SELECT dept, instructor WHERE instructor contains asterisk in the middle",
 			checkQuery
 		);
+		it(
+			"[invalid/invalidwildcards.json] SELECT dept, instructor WHERE instructor contains asterisk in the middle",
+			checkQuery
+		);
 		it("[invalid/nooptions.json] SELECT with missing OPTIONS field", checkQuery);
 		it(
 			"[valid/asteriskstart.json] SELECT dept, instructor WHERE instructor contains asterisk in the start",
@@ -419,12 +423,20 @@ describe("InsightFacade", function () {
 			"[valid/asteriskstartend.json] SELECT dept, instructor WHERE instructor contains asterisk at start and end",
 			checkQuery
 		);
+		it(
+			"[valid/asteriskstartend2.json] SELECT dept, instructor WHERE instructor contains asterisk at start and end 2",
+			checkQuery
+		);
+		it("[valid/andwildcards.json] SELECT dept, instructor WHERE instructor is the combination", checkQuery);
 		it("[valid/noasterisk.json] SELECT dept, instructor WHERE instructor contains no asterisk", checkQuery);
 		it("[invalid/resulttoolarge.json] SELECT dept, result too large", checkQuery);
 		it("[valid/lessthan.json] SELECT dept, avg WHERE avg < 25", checkQuery);
 		it("[valid/equal.json] SELECT dept, avg WHERE avg = 98", checkQuery);
 		it("[valid/negation.json] try negation", checkQuery);
 		it("[valid/andcompare.json] and comparator", checkQuery);
+		it("[valid/andcompare2.json] and comparator 2", checkQuery);
+		it("[valid/andcomparenested.json] and comparator nested", checkQuery);
+		it("[valid/andnotdemorgan.json] and not de morgan", checkQuery);
 		it("[valid/orcompare.json] or comparator", checkQuery);
 		it("[valid/combinecompare.json] combine comparator", checkQuery);
 		it("[valid/emptyresult.json] empty result", checkQuery);
