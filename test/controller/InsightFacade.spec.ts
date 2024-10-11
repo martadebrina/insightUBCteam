@@ -342,7 +342,7 @@ describe("InsightFacade", function () {
 		});
 	}
 
-	describe.only("PerformQuery", function () {
+	describe("PerformQuery", function () {
 		/**
 		 * Loads the TestQuery specified in the test name and asserts the behaviour of performQuery.
 		 *
@@ -405,8 +405,16 @@ describe("InsightFacade", function () {
 		// The relative path to the query file must be given in square brackets.
 		it("[valid/simple.json] SELECT dept, avg WHERE avg > 97", checkQuery);
 		it("[invalid/invalid.json] Query missing WHERE", checkQuery);
+		it("[invalid/invalidand.json] Query missing AND", checkQuery);
+		it("[invalid/invalidor.json] Query missing OR", checkQuery);
+		it("[invalid/invalidscomp.json] Query missing IS", checkQuery);
+		//it("[invalid/invalidnegation.json] Query missing NOT", checkQuery);
 		it(
 			"[invalid/asteriskmiddle.json] SELECT dept, instructor WHERE instructor contains asterisk in the middle",
+			checkQuery
+		);
+		it(
+			"[invalid/invalidwildcards.json] SELECT dept, instructor WHERE instructor contains asterisk in the middle",
 			checkQuery
 		);
 		it("[invalid/nooptions.json] SELECT with missing OPTIONS field", checkQuery);
@@ -419,12 +427,20 @@ describe("InsightFacade", function () {
 			"[valid/asteriskstartend.json] SELECT dept, instructor WHERE instructor contains asterisk at start and end",
 			checkQuery
 		);
+		it(
+			"[valid/asteriskstartend2.json] SELECT dept, instructor WHERE instructor contains asterisk at start and end 2",
+			checkQuery
+		);
+		it("[valid/andwildcards.json] SELECT dept, instructor WHERE instructor is the combination", checkQuery);
 		it("[valid/noasterisk.json] SELECT dept, instructor WHERE instructor contains no asterisk", checkQuery);
 		it("[invalid/resulttoolarge.json] SELECT dept, result too large", checkQuery);
 		it("[valid/lessthan.json] SELECT dept, avg WHERE avg < 25", checkQuery);
 		it("[valid/equal.json] SELECT dept, avg WHERE avg = 98", checkQuery);
 		it("[valid/negation.json] try negation", checkQuery);
 		it("[valid/andcompare.json] and comparator", checkQuery);
+		it("[valid/andcompare2.json] and comparator 2", checkQuery);
+		it("[valid/andcomparenested.json] and comparator nested", checkQuery);
+		it("[valid/andnotdemorgan.json] and not de morgan", checkQuery);
 		it("[valid/orcompare.json] or comparator", checkQuery);
 		it("[valid/combinecompare.json] combine comparator", checkQuery);
 		it("[valid/emptyresult.json] empty result", checkQuery);

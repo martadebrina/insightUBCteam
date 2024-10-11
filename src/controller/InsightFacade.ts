@@ -90,8 +90,6 @@ export default class InsightFacade implements IInsightFacade {
 		// load from disk
 		await this.loadDatasetsFromDisk();
 
-		// console.log(query);
-
 		// go through the query (from chatGPT)
 		const { WHERE, OPTIONS } = query as any;
 
@@ -100,30 +98,107 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("invalid format");
 		}
 
+		if (typeof query !== "object") {
+			throw new InsightError();
+		}
+
+		if (!query) {
+			throw new InsightError();
+		}
+
+		for (const x of Object.keys(query)) {
+			if (x !== "WHERE" && x !== "OPTIONS") {
+				throw new InsightError();
+			}
+		}
+
 		// get id from first element of column
 		const queryId = await this.hf.getQueryId(OPTIONS);
 
 		const foundDataset = this.datasets.get(queryId);
+
 		// no dataset with id found
 		if (!foundDataset) {
 			throw new InsightError("reference not found");
 		}
+
 		const filtered = await this.handleWhere(WHERE, foundDataset.sections, queryId);
+
+		if (filtered.length === 0) {
+			return [];
+		}
 
 		// handle OPTIONS
 		const result = await this.handleOptions(OPTIONS, filtered, queryId);
 
-		if (result.length > 5000) {
-			throw new ResultTooLargeError("");
+		const limit = 5000;
+
+		if (result.length > limit) {
+			throw new ResultTooLargeError("result too large");
 		}
+
+		// console.log(result);
 
 		return result;
 	}
 
+	private async handleOptions(options: any, filtered: Section[], queryId: string): Promise<InsightResult[]> {
+		const columns = options.COLUMNS;
+		const order = options.ORDER;
+		const columnParam: String[] = [];
+
+		// map filtered sections to the required columns
+		const results: InsightResult[] = filtered.map((section) => {
+			const result: any = {};
+			columns.forEach((col: string) => {
+				const [datasetId, field] = col.split("_");
+				if (datasetId !== queryId) {
+					throw new InsightError("invalid dataset");
+				}
+				columnParam.push(field);
+				result[col] = this.hf.getParamAll(field, section);
+			});
+			return result;
+		});
+
+		// If ORDER exists, sort the results
+		if (order) {
+			this.sortResults(results, order, queryId, columnParam);
+		}
+
+		return results;
+	}
+
+	private sortResults(results: InsightResult[], order: string, queryId: string, columnParam: String[]): void {
+		if (typeof order !== "string") {
+			throw new InsightError("Invalid order key");
+		}
+
+		const [dataset, orderParam] = order.split("_");
+		if (dataset !== queryId) {
+			throw new InsightError("Invalid dataset");
+		}
+		if (!columnParam.includes(orderParam)) {
+			throw new InsightError("");
+		}
+
+		results.sort((a, b) => {
+			const aValue = a[order];
+			const bValue = b[order];
+
+			if (typeof aValue === "string" && typeof bValue === "string") {
+				return aValue.localeCompare(bValue); // Lexical comparison for strings
+			} else if (typeof aValue === "number" && typeof bValue === "number") {
+				return aValue - bValue; // Numeric comparison for numbers
+			} else {
+				throw new InsightError("Cannot compare values of different types");
+			}
+		});
+	}
+
 	private async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// Todo: traverse the BODY
 		// base case
-		if (where.length === 0) {
+		if (Object.keys(where).length === 0) {
 			return sections;
 		}
 		if (where.AND || where.OR) {
@@ -159,15 +234,19 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleSComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+		if (Object.keys(where.IS).length === 0) {
+			throw new InsightError("Invalid Query Syntax for IS");
+		}
+
 		const [key, value]: [string, unknown] = Object.entries(where.IS)[0];
 		const param = key.split("_")[1];
 		const dataset = key.split("_")[0];
 		if (dataset !== queryId) {
 			throw new InsightError("");
 		}
-		// console.log(param);
+
 		if (typeof value !== "string") {
-			throw new InsightError(`Invalid value type for ${key}. Expected a string but got ${typeof value}`);
+			throw new InsightError("invalid skey");
 		}
 		const a = sections.filter((s) => {
 			const valueType = this.hf.getValueType(value);
@@ -182,11 +261,11 @@ export default class InsightFacade implements IInsightFacade {
 			} else if (valueType === "end") {
 				const newString = value.slice(0, -1);
 				return compareValue.startsWith(newString);
-			} else if (valueType === "normal") {
+			} else {
 				return compareValue === value;
 			}
 		});
-		// console.log(a);
+
 		return a;
 	}
 
@@ -206,19 +285,18 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleOr(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		const filteredSections: any[] = [];
-		const orArrLength = where.OR.length;
-
-		// fill in with the result of each recursion
-		for (let i = 0; i < orArrLength; i++) {
-			filteredSections[i] = this.handleWhere(where.OR[i], sections, queryId);
+		if (where.OR.length === 0) {
+			throw new InsightError("Invalid Query Syntax");
 		}
-		await Promise.all(filteredSections);
+
+		const orPromises = where.OR.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
+
+		const filteredSections = await Promise.all(orPromises);
 
 		// check whether the section is found in one of the filteredSections members
 		function sectionChecker(s: Section): boolean {
-			for (let i = 0; i < orArrLength; i++) {
-				if (filteredSections[i].includes(s)) {
+			for (const x of filteredSections) {
+				if (x.includes(s)) {
 					return true;
 				}
 			}
@@ -231,28 +309,35 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleAnd(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		const filteredSections: any[] = [];
-		const andArrLength = where.AND.length;
+		// const filteredSections: any[] = [];
+		// const andArrLength = where.AND.length;
 
-		// fill in with the result of each recursion
-		for (let i = 0; i < andArrLength; i++) {
-			filteredSections[i] = this.handleWhere(where.AND[i], sections, queryId);
+		// // fill in with the result of each recursion
+		// for (let i = 0; i < andArrLength; i++) {
+		// 	filteredSections[i] = this.handleWhere(where.AND[i], sections, queryId);
+		// }
+
+		if (where.AND.length === 0) {
+			throw new InsightError("Invalid Query Syntax");
 		}
-		await Promise.all(filteredSections);
+
+		const andPromises = where.AND.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
+
+		const filteredSections = await Promise.all(andPromises);
+
+		// console.log(filteredSections);
 
 		// check whether the section is found in all of the filteredSections members
-		function sectionChecker(s: Section): boolean {
-			for (let i = 0; i < andArrLength; i++) {
-				if (!filteredSections[i].includes(s)) {
-					return false;
-				}
-			}
-			return true;
-		}
+		// function sectionChecker(s: Section): boolean {
+		// 	for (const x of filteredSections) {
+		// 		if (!x.includes(s)) {
+		// 			return false;
+		// 		}
+		// 	}
+		// 	return true;
+		// }
 
-		return sections.filter((s: Section) => {
-			return sectionChecker(s);
-		});
+		return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section)));
 	}
 
 	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
@@ -368,7 +453,6 @@ export default class InsightFacade implements IInsightFacade {
 			newData.kind = dataset.kind;
 			this.datasets.set(id, newData);
 		}
-		// console.log(this.datasets);
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {

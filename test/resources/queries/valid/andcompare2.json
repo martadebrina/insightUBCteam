@@ -1,0 +1,35 @@
+{
+	"title": "and comparator 2",
+	"input": {
+		"WHERE": {
+			"AND": [
+				{
+					"GT": {
+						"sections_avg": 93
+					}
+				},
+				{
+					"IS": {
+						"sections_dept": "cpsc"
+					}
+				},
+				{
+					"LT": {
+						"sections_avg": 94
+					}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": ["sections_dept", "sections_avg"],
+			"ORDER": "sections_avg"
+		}
+	},
+	"errorExpected": false,
+	"expected": [
+		{ "sections_dept": "cpsc", "sections_avg": 93.38 },
+		{ "sections_dept": "cpsc", "sections_avg": 93.38 },
+		{ "sections_dept": "cpsc", "sections_avg": 93.5 },
+		{ "sections_dept": "cpsc", "sections_avg": 93.5 }
+	]
+}

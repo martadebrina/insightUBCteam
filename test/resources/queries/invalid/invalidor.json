@@ -1,0 +1,13 @@
+{
+	"title": "logic comparator 0 length array",
+	"input": {
+		"WHERE": {
+			"OR": []
+		},
+		"OPTIONS": {
+			"COLUMNS": ["sections_dept", "sections_instructor"]
+		}
+	},
+	"errorExpected": true,
+	"expected": "InsightError"
+}

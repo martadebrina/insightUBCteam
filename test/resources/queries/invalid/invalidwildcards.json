@@ -1,0 +1,29 @@
+{
+	"title": "and combined with wildcard but wildcard error",
+	"input": {
+		"WHERE": {
+			"AND": [
+				{
+					"IS": {
+						"sections_instructor": "*richer,* harvey"
+					}
+				},
+				{
+					"IS": {
+						"sections_instructor": "richer, harvey*"
+					}
+				},
+				{
+					"IS": {
+						"sections_instructor": "*richer, harvey*"
+					}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": ["sections_dept", "sections_instructor"]
+		}
+	},
+	"errorExpected": true,
+	"expected": "InsightError"
+}
