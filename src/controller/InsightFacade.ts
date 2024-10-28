@@ -18,14 +18,10 @@ export default class InsightFacade implements IInsightFacade {
 	private hf = new HelperFunction();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(kind);
 
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
-		}
-
-		if (kind !== InsightDatasetKind.Sections) {
-			throw new InsightError("kind not valid");
 		}
 
 		if (this.datasets.has(id)) {
@@ -51,7 +47,8 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async removeDataset(id: string): Promise<string> {
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
@@ -69,7 +66,8 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async listDatasets(): Promise<InsightDataset[]> {
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		const insightDatasetList: InsightDataset[] = [];
 		const datasetList = this.datasets.entries();
@@ -88,7 +86,8 @@ export default class InsightFacade implements IInsightFacade {
 
 	public async performQuery(query: unknown): Promise<InsightResult[]> {
 		// load from disk
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		// go through the query (from chatGPT)
 		const { WHERE, OPTIONS } = query as any;
@@ -327,29 +326,31 @@ export default class InsightFacade implements IInsightFacade {
 		});
 	}
 
-	private async loadDatasetsFromDisk(): Promise<void> {
-		const exist = await fs.pathExists("./data/Datasets.json");
+	private async loadDatasetsFromDisk(k: InsightDatasetKind): Promise<void> {
+		if (k === InsightDatasetKind.Sections) {
+			const exist = await fs.pathExists("./data/Datasets.json");
 
-		if (!exist) {
-			return;
-		}
-
-		const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
-
-		for (const [id, dataset] of datasetArray) {
-			if (this.datasets.has(id)) {
-				continue;
+			if (!exist) {
+				return;
 			}
-			const newData = new Datasets();
-			newData.sections = dataset.sections;
-			newData.numRows = dataset.numRows;
-			newData.kind = dataset.kind;
-			this.datasets.set(id, newData);
+
+			const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
+
+			for (const [id, dataset] of datasetArray) {
+				if (this.datasets.has(id)) {
+					continue;
+				}
+				const newData = new Datasets(k);
+				newData.sections = dataset.sections;
+				newData.numRows = dataset.numRows;
+				newData.kind = dataset.kind;
+				this.datasets.set(id, newData);
+			}
 		}
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {
-		const dumpDatasets = new Datasets();
+		const dumpDatasets = new Datasets(InsightDatasetKind.Sections);
 		const zipContent = zip.files;
 		const keyContent = Object.keys(zipContent);
 		const filteredContent = keyContent.filter((checkPath: string) => {

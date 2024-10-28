@@ -42,13 +42,11 @@ export class HelperFunction {
 	}
 
 	public getParamAll(param: String, s: Section): number | string {
-		if (typeof param === "string") {
+		try {
 			return this.getParamString(param, s);
-		}
-		if (typeof param === "number") {
+		} catch {
 			return this.getParamNum(param, s);
 		}
-		throw new InsightError("no valid param");
 	}
 
 	public async getQueryId(options: any): Promise<string> {

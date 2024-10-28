@@ -1,16 +1,14 @@
 import { InsightDatasetKind, InsightError } from "./IInsightFacade";
 
 export class Datasets {
-	// private datasetMap: Map<string, DatasetInfo>;
-
 	public sections: Section[];
 	public numRows: number;
 	public kind: InsightDatasetKind;
 
-	constructor() {
+	constructor(k: InsightDatasetKind) {
 		this.sections = [];
 		this.numRows = 0;
-		this.kind = InsightDatasetKind.Sections;
+		this.kind = k;
 	}
 
 	public addSection(newCourse: Section): void {
@@ -20,8 +18,6 @@ export class Datasets {
 }
 
 export class Section {
-	// private sectionList: any[];
-
 	public uuid: string;
 	public id: string;
 	public title: string;
@@ -72,6 +68,54 @@ export class Section {
 			c.Fail !== undefined ||
 			c.Audit !== undefined
 		);
+	}
+
+	public anyToNum(n: any): number {
+		const num = Number(n);
+		if (isNaN(num)) {
+			throw new InsightError("n is not a number");
+		}
+		return num;
+	}
+}
+
+export class Room {
+	public fullname: string;
+	public shortname: string;
+	public number: string;
+	public name: string;
+	public address: string;
+	public lat: number;
+	public lon: number;
+	public seats: number;
+	public type: string;
+	public furniture: string;
+	public href: string;
+
+	constructor(room: any) {
+		// check if section is valid
+		if (!this.isValidRoom(room)) {
+			throw new InsightError("Undefined variable -> invalid section");
+		}
+		try {
+			this.fullname = String(room.id);
+			this.shortname = String(room.shortname);
+			this.number = String(room.number);
+			this.name = String(room.name);
+			this.address = String(room.address);
+			this.lat = this.anyToNum(room.lat);
+			this.lon = this.anyToNum(room.lon);
+			this.seats = this.anyToNum(room.seats);
+			this.type = String(room.type);
+			this.furniture = String(room.furniture);
+			this.href = String(room.href);
+		} catch (_err) {
+			throw new InsightError("invalid variable type");
+		}
+	}
+
+	public isValidRoom(r: any): boolean {
+		return typeof r === "string";
 	}
 
 	public anyToNum(n: any): number {
