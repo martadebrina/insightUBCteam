@@ -219,7 +219,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleMComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// now we have list of sections with ID yang dimau
+		// now we have list of sections with ID that we want
 		if (where.GT) {
 			return await this.hf.handleGreaterThan(where, sections, queryId);
 		}
@@ -309,14 +309,6 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleAnd(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// const filteredSections: any[] = [];
-		// const andArrLength = where.AND.length;
-
-		// // fill in with the result of each recursion
-		// for (let i = 0; i < andArrLength; i++) {
-		// 	filteredSections[i] = this.handleWhere(where.AND[i], sections, queryId);
-		// }
-
 		if (where.AND.length === 0) {
 			throw new InsightError("Invalid Query Syntax");
 		}
@@ -325,24 +317,10 @@ export default class InsightFacade implements IInsightFacade {
 
 		const filteredSections = await Promise.all(andPromises);
 
-		// console.log(filteredSections);
-
-		// check whether the section is found in all of the filteredSections members
-		// function sectionChecker(s: Section): boolean {
-		// 	for (const x of filteredSections) {
-		// 		if (!x.includes(s)) {
-		// 			return false;
-		// 		}
-		// 	}
-		// 	return true;
-		// }
-
 		return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section)));
 	}
 
 	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// filter the sections
-
 		const filteredSections = await this.handleWhere(where.NOT, sections, queryId);
 		return sections.filter((s: Section) => {
 			return !filteredSections.includes(s);
@@ -357,8 +335,6 @@ export default class InsightFacade implements IInsightFacade {
 		}
 
 		const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
-
-		// this.datasets.clear();
 
 		for (const [id, dataset] of datasetArray) {
 			if (this.datasets.has(id)) {
@@ -409,7 +385,6 @@ export default class InsightFacade implements IInsightFacade {
 	private async saveDatasetsDisk(datasets: Map<String, Datasets>): Promise<void> {
 		// Convert Map to an object before writing, from chatGPT
 		const datasetsArray = Array.from(datasets.entries());
-		// console.log(this.datasets);
 
 		await fs.ensureDir("./data");
 

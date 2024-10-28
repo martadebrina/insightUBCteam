@@ -60,17 +60,17 @@ export class Section {
 
 	public isValidSection(c: any): boolean {
 		return (
-			c.id === undefined ||
-			c.Course === undefined ||
-			c.title === undefined ||
-			c.Professor === undefined ||
-			c.Subject === undefined ||
-			c.Section === undefined ||
-			c.Year === undefined ||
-			c.Avg === undefined ||
-			c.Pass === undefined ||
-			c.Fail === undefined ||
-			c.Audit === undefined
+			c.id !== undefined ||
+			c.Course !== undefined ||
+			c.title !== undefined ||
+			c.Professor !== undefined ||
+			c.Subject !== undefined ||
+			c.Section !== undefined ||
+			c.Year !== undefined ||
+			c.Avg !== undefined ||
+			c.Pass !== undefined ||
+			c.Fail !== undefined ||
+			c.Audit !== undefined
 		);
 	}
 
