@@ -18,14 +18,10 @@ export default class InsightFacade implements IInsightFacade {
 	private hf = new HelperFunction();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(kind);
 
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
-		}
-
-		if (kind !== InsightDatasetKind.Sections) {
-			throw new InsightError("kind not valid");
 		}
 
 		if (this.datasets.has(id)) {
@@ -51,7 +47,8 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async removeDataset(id: string): Promise<string> {
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
@@ -69,7 +66,8 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async listDatasets(): Promise<InsightDataset[]> {
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		const insightDatasetList: InsightDataset[] = [];
 		const datasetList = this.datasets.entries();
@@ -88,7 +86,8 @@ export default class InsightFacade implements IInsightFacade {
 
 	public async performQuery(query: unknown): Promise<InsightResult[]> {
 		// load from disk
-		await this.loadDatasetsFromDisk();
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
+		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		// go through the query (from chatGPT)
 		const { WHERE, OPTIONS } = query as any;
@@ -219,7 +218,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleMComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// now we have list of sections with ID yang dimau
+		// now we have list of sections with ID that we want
 		if (where.GT) {
 			return await this.hf.handleGreaterThan(where, sections, queryId);
 		}
@@ -309,14 +308,6 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async handleAnd(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// const filteredSections: any[] = [];
-		// const andArrLength = where.AND.length;
-
-		// // fill in with the result of each recursion
-		// for (let i = 0; i < andArrLength; i++) {
-		// 	filteredSections[i] = this.handleWhere(where.AND[i], sections, queryId);
-		// }
-
 		if (where.AND.length === 0) {
 			throw new InsightError("Invalid Query Syntax");
 		}
@@ -325,55 +316,41 @@ export default class InsightFacade implements IInsightFacade {
 
 		const filteredSections = await Promise.all(andPromises);
 
-		// console.log(filteredSections);
-
-		// check whether the section is found in all of the filteredSections members
-		// function sectionChecker(s: Section): boolean {
-		// 	for (const x of filteredSections) {
-		// 		if (!x.includes(s)) {
-		// 			return false;
-		// 		}
-		// 	}
-		// 	return true;
-		// }
-
 		return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section)));
 	}
 
 	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// filter the sections
-
 		const filteredSections = await this.handleWhere(where.NOT, sections, queryId);
 		return sections.filter((s: Section) => {
 			return !filteredSections.includes(s);
 		});
 	}
 
-	private async loadDatasetsFromDisk(): Promise<void> {
-		const exist = await fs.pathExists("./data/Datasets.json");
+	private async loadDatasetsFromDisk(k: InsightDatasetKind): Promise<void> {
+		if (k === InsightDatasetKind.Sections) {
+			const exist = await fs.pathExists("./data/Datasets.json");
 
-		if (!exist) {
-			return;
-		}
-
-		const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
-
-		// this.datasets.clear();
-
-		for (const [id, dataset] of datasetArray) {
-			if (this.datasets.has(id)) {
-				continue;
+			if (!exist) {
+				return;
 			}
-			const newData = new Datasets();
-			newData.sections = dataset.sections;
-			newData.numRows = dataset.numRows;
-			newData.kind = dataset.kind;
-			this.datasets.set(id, newData);
+
+			const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
+
+			for (const [id, dataset] of datasetArray) {
+				if (this.datasets.has(id)) {
+					continue;
+				}
+				const newData = new Datasets(k);
+				newData.sections = dataset.sections;
+				newData.numRows = dataset.numRows;
+				newData.kind = dataset.kind;
+				this.datasets.set(id, newData);
+			}
 		}
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {
-		const dumpDatasets = new Datasets();
+		const dumpDatasets = new Datasets(InsightDatasetKind.Sections);
 		const zipContent = zip.files;
 		const keyContent = Object.keys(zipContent);
 		const filteredContent = keyContent.filter((checkPath: string) => {
@@ -409,7 +386,6 @@ export default class InsightFacade implements IInsightFacade {
 	private async saveDatasetsDisk(datasets: Map<String, Datasets>): Promise<void> {
 		// Convert Map to an object before writing, from chatGPT
 		const datasetsArray = Array.from(datasets.entries());
-		// console.log(this.datasets);
 
 		await fs.ensureDir("./data");
 

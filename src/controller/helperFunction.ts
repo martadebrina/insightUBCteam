@@ -21,22 +21,7 @@ export class HelperFunction {
 		throw new InsightError();
 	}
 
-	public getParamAll(param: String, s: Section): number | string {
-		if (param === "year") {
-			return s.year;
-		}
-		if (param === "avg") {
-			return s.avg;
-		}
-		if (param === "pass") {
-			return s.pass;
-		}
-		if (param === "fail") {
-			return s.fail;
-		}
-		if (param === "audit") {
-			return s.audit;
-		}
+	public getParamString(param: String, s: Section): string {
 		if (param === "uuid") {
 			return s.uuid;
 		}
@@ -52,7 +37,16 @@ export class HelperFunction {
 		if (param === "dept") {
 			return s.dept;
 		}
-		throw new InsightError();
+
+		throw new InsightError("no valid param");
+	}
+
+	public getParamAll(param: String, s: Section): number | string {
+		try {
+			return this.getParamString(param, s);
+		} catch {
+			return this.getParamNum(param, s);
+		}
 	}
 
 	public async getQueryId(options: any): Promise<string> {
@@ -98,26 +92,6 @@ export class HelperFunction {
 		} else {
 			return "normal";
 		}
-	}
-
-	public getParamString(param: String, s: Section): string {
-		if (param === "uuid") {
-			return s.uuid;
-		}
-		if (param === "id") {
-			return s.id;
-		}
-		if (param === "title") {
-			return s.title;
-		}
-		if (param === "instructor") {
-			return s.instructor;
-		}
-		if (param === "dept") {
-			return s.dept;
-		}
-
-		throw new InsightError("no valid param");
 	}
 
 	public async handleGreaterThan(where: any, sections: Section[], queryId: string): Promise<Section[]> {
