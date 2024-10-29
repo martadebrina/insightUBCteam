@@ -34,43 +34,45 @@ describe("InsightFacade", function () {
 		await clearDisk();
 	});
 
-	// describe("Caching Tests without Sinon", function () {
-	// 	let insightFacade: InsightFacade;
-	// 	const testDataPath = "./testData";  // Directory to store test files
+	/* This is the legacy of the previous code that we replace
+	describe("Caching Tests without Sinon", function () {
+		let insightFacade: InsightFacade;
+		const testDataPath = "./testData";  // Directory to store test files
 
-	// 	beforeEach(async function () {
-	// 		// Ensure the test directory is clean before each test
-	// 		await fs.remove(testDataPath);
-	// 		await fs.ensureDir(testDataPath);
-	// 		insightFacade = new InsightFacade();
-	// 	});
+		beforeEach(async function () {
+			// Ensure the test directory is clean before each test
+			await fs.remove(testDataPath);
+			await fs.ensureDir(testDataPath);
+			insightFacade = new InsightFacade();
+		});
 
-	// 	afterEach(async function () {
-	// 		// Clean up after each test
-	// 		await fs.remove(testDataPath);
-	// 	});
+		afterEach(async function () {
+			// Clean up after each test
+			await fs.remove(testDataPath);
+		});
 
-	// 	it("should add dataset and check if file is saved on disk", async function () {
-	// 		const id = "courses";
-	// 		const content = ;  // Replace with actual encoded content
-	// 		const kind = InsightDatasetKind.Sections;
+		it("should add dataset and check if file is saved on disk", async function () {
+			const id = "courses";
+			const content = ;  // Replace with actual encoded content
+			const kind = InsightDatasetKind.Sections;
 
-	// 		// Add dataset and verify it's returned in the list
-	// 		const datasets = await insightFacade.addDataset(id, content, kind);
-	// 		expect(datasets).to.include(id);
+			// Add dataset and verify it's returned in the list
+			const datasets = await insightFacade.addDataset(id, content, kind);
+			expect(datasets).to.include(id);
 
-	// 		// Verify that the dataset file was saved to disk
-	// 		const datasetFilePath = `${testDataPath}/Datasets.json`;
-	// 		const fileExists = await fs.pathExists(datasetFilePath);
-	// 		expect(fileExists).to.be.true;
+			// Verify that the dataset file was saved to disk
+			const datasetFilePath = `${testDataPath}/Datasets.json`;
+			const fileExists = await fs.pathExists(datasetFilePath);
+			expect(fileExists).to.be.true;
 
-	// 		// Read the saved file and verify its content
-	// 		const savedData = await fs.readJSON(datasetFilePath);
-	// 		expect(savedData.length).to.equal(1);
-	// 		expect(savedData[0][0]).to.equal(id);
-	// 		expect(savedData[0][1].numRows).to.be.greaterThan(0);  // Example check
-	// 	});
-	// });
+			// Read the saved file and verify its content
+			const savedData = await fs.readJSON(datasetFilePath);
+			expect(savedData.length).to.equal(1);
+			expect(savedData[0][0]).to.equal(id);
+			expect(savedData[0][1].numRows).to.be.greaterThan(0);  // Example check
+		});
+	});
+	*/
 
 	describe("AddDataset", function () {
 		beforeEach(function () {
@@ -409,7 +411,6 @@ describe("InsightFacade", function () {
 		it("[invalid/invalidand.json] Query missing AND", checkQuery);
 		it("[invalid/invalidor.json] Query missing OR", checkQuery);
 		it("[invalid/invalidscomp.json] Query missing IS", checkQuery);
-		// it("[invalid/invalidnegation.json] Query missing NOT", checkQuery);
 		it(
 			"[invalid/asteriskmiddle.json] SELECT dept, instructor WHERE instructor contains asterisk in the middle",
 			checkQuery

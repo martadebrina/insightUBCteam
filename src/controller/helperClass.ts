@@ -1,16 +1,14 @@
 import { InsightDatasetKind, InsightError } from "./IInsightFacade";
 
 export class Datasets {
-	// private datasetMap: Map<string, DatasetInfo>;
-
 	public sections: Section[];
 	public numRows: number;
 	public kind: InsightDatasetKind;
 
-	constructor() {
+	constructor(k: InsightDatasetKind) {
 		this.sections = [];
 		this.numRows = 0;
-		this.kind = InsightDatasetKind.Sections;
+		this.kind = k;
 	}
 
 	public addSection(newCourse: Section): void {
@@ -20,8 +18,6 @@ export class Datasets {
 }
 
 export class Section {
-	// private sectionList: any[];
-
 	public uuid: string;
 	public id: string;
 	public title: string;
@@ -60,17 +56,17 @@ export class Section {
 
 	public isValidSection(c: any): boolean {
 		return (
-			c.id === undefined ||
-			c.Course === undefined ||
-			c.title === undefined ||
-			c.Professor === undefined ||
-			c.Subject === undefined ||
-			c.Section === undefined ||
-			c.Year === undefined ||
-			c.Avg === undefined ||
-			c.Pass === undefined ||
-			c.Fail === undefined ||
-			c.Audit === undefined
+			c.id !== undefined ||
+			c.Course !== undefined ||
+			c.title !== undefined ||
+			c.Professor !== undefined ||
+			c.Subject !== undefined ||
+			c.Section !== undefined ||
+			c.Year !== undefined ||
+			c.Avg !== undefined ||
+			c.Pass !== undefined ||
+			c.Fail !== undefined ||
+			c.Audit !== undefined
 		);
 	}
 
