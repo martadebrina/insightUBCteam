@@ -110,8 +110,8 @@ export class Room {
 			this.number = String(room.number);
 			this.name = String(room.name);
 			this.address = String(room.address);
-			this.lat = this.anyToNum(room.lat);
-			this.lon = this.anyToNum(room.lon);
+			this.lat = 0;
+			this.lon = 0;
 			this.seats = this.anyToNum(room.seats);
 			this.type = String(room.type);
 			this.furniture = String(room.furniture);

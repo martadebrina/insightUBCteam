@@ -100,7 +100,6 @@ export default class InsightFacade implements IInsightFacade {
 		const { buildings, buildingLinks } = this.hr.extractBuildingsData(buildingTable);
 
 		await this.hr.assignLatLon(buildings);
-
 		const rooms = await this.hr.extractRoomData(buildingLinks, buildings, zipData);
 		for (const room of rooms) {
 			if (!room) {
