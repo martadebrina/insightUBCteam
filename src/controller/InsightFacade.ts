@@ -9,13 +9,18 @@ import {
 } from "./IInsightFacade";
 import JSZip, { loadAsync } from "jszip";
 import * as fs from "fs-extra";
-import { Datasets, Section } from "./helperClass";
+import { Datasets, Section, Room } from "./helperClass";
 import { HelperFunction } from "./helperFunction";
+import { HelperRoom } from "./helperRoom";
+import * as parse5 from "parse5";
+import { HelperWhere } from "./helperWhere";
 // import * as path from "path";
 
 export default class InsightFacade implements IInsightFacade {
 	private datasets = new Map<string, Datasets>();
 	private hf = new HelperFunction();
+	private hr = new HelperRoom();
+	private hw = new HelperWhere();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		await this.loadDatasetsFromDisk(kind);
@@ -23,7 +28,6 @@ export default class InsightFacade implements IInsightFacade {
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
-
 		if (this.datasets.has(id)) {
 			throw new InsightError("Dataset already exists");
 		}
@@ -31,14 +35,20 @@ export default class InsightFacade implements IInsightFacade {
 		let zipData: JSZip;
 		try {
 			zipData = await loadAsync(content, { base64: true });
-			const files = zipData.folder("courses");
-			if (!files) {
-				throw new InsightError("no courses folder");
+			if (kind === InsightDatasetKind.Sections) {
+				const files = zipData.folder("courses");
+				if (!files) {
+					throw new InsightError("no courses folder");
+				}
+				if (files.length === 0) {
+					throw new InsightError("no content in files");
+				}
+				await this.parseZipFile(id, zipData, this.datasets);
+			} else if (kind === InsightDatasetKind.Rooms) {
+				await this.parseRoomZipFile(id, zipData, this.datasets);
+			} else {
+				throw new InsightError("Invalid dataset kind");
 			}
-			if (files.length === 0) {
-				throw new InsightError("no content in files");
-			}
-			await this.parseZipFile(id, zipData, this.datasets);
 		} catch (_err) {
 			throw new InsightError("Fail to unzip");
 		}
@@ -63,6 +73,45 @@ export default class InsightFacade implements IInsightFacade {
 		await this.saveDatasetsDisk(this.datasets);
 
 		return id;
+	}
+
+	private async parseRoomZipFile(id: string, zipData: JSZip, datasets: Map<string, Datasets>): Promise<void> {
+		const dumpDatasets = new Datasets(InsightDatasetKind.Rooms);
+		const indexFilePath = Object.keys(zipData.files).find((path) => path.endsWith("index.htm"));
+		if (!indexFilePath) {
+			throw new InsightError("no index.htm folderß");
+		}
+		const indexFile = zipData.file(indexFilePath);
+		if (!indexFile) {
+			throw new InsightError("no index file inside the folder");
+		}
+		const indexContent = await indexFile.async("string");
+		const document = parse5.parse(indexContent);
+
+		// find building and classrooms table
+		const tables = this.hr.findAllNodesByName(document, "table");
+		const buildingTable = tables.find((table) => this.hr.isValidBuildingTable(table));
+		//console.log(buildingTable);
+		if (!buildingTable) {
+			throw new InsightError("no valid building table");
+		}
+
+		// extract room data
+		const { buildings, buildingLinks } = this.hr.extractBuildingsData(buildingTable);
+
+		await this.hr.assignLatLon(buildings);
+
+		const rooms = await this.hr.extractRoomData(buildingLinks, buildings, zipData);
+		for (const room of rooms) {
+			if (!room) {
+				continue;
+			}
+			const roomInstance = new Room(room);
+			//console.log(roomInstance);
+			dumpDatasets.addRoom(roomInstance);
+		}
+		datasets.set(id, dumpDatasets);
+		await this.saveDatasetsDisk(datasets);
 	}
 
 	public async listDatasets(): Promise<InsightDataset[]> {
@@ -121,7 +170,7 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("reference not found");
 		}
 
-		const filtered = await this.handleWhere(WHERE, foundDataset.sections, queryId);
+		const filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
 
 		if (filtered.length === 0) {
 			return [];
@@ -195,137 +244,6 @@ export default class InsightFacade implements IInsightFacade {
 		});
 	}
 
-	private async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// base case
-		if (Object.keys(where).length === 0) {
-			return sections;
-		}
-		if (where.AND || where.OR) {
-			// handle logic comp
-			return await this.handleLogicComp(where, sections, queryId);
-		}
-		if (where.NOT) {
-			return await this.handleNegation(where, sections, queryId);
-		}
-		if (where.IS) {
-			return await this.handleSComp(where, sections, queryId);
-		}
-		if (where.LT || where.GT || where.EQ) {
-			return await this.handleMComp(where, sections, queryId);
-		}
-
-		throw new InsightError("invalid ebnf");
-	}
-
-	private async handleMComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// now we have list of sections with ID that we want
-		if (where.GT) {
-			return await this.hf.handleGreaterThan(where, sections, queryId);
-		}
-		if (where.LT) {
-			return await this.hf.handleLessThan(where, sections, queryId);
-		}
-
-		if (where.EQ) {
-			return await this.hf.handleEqual(where, sections, queryId);
-		}
-		throw new InsightError("no m comp");
-	}
-
-	private async handleSComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		if (Object.keys(where.IS).length === 0) {
-			throw new InsightError("Invalid Query Syntax for IS");
-		}
-
-		const [key, value]: [string, unknown] = Object.entries(where.IS)[0];
-		const param = key.split("_")[1];
-		const dataset = key.split("_")[0];
-		if (dataset !== queryId) {
-			throw new InsightError("");
-		}
-
-		if (typeof value !== "string") {
-			throw new InsightError("invalid skey");
-		}
-		const a = sections.filter((s) => {
-			const valueType = this.hf.getValueType(value);
-			const compareValue = this.hf.getParamString(param, s);
-			if (valueType === "startend") {
-				const newString = value.slice(1, -1);
-				return compareValue.includes(newString);
-			} else if (valueType === "start") {
-				const newString = value.slice(1);
-				// console.log(newString);
-				return compareValue.endsWith(newString);
-			} else if (valueType === "end") {
-				const newString = value.slice(0, -1);
-				return compareValue.startsWith(newString);
-			} else {
-				return compareValue === value;
-			}
-		});
-
-		return a;
-	}
-
-	private async handleLogicComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		// where.LOGIC is an array, e.g. ( { AND: [ { GT: [Object] }, { IS: [Object] } ] } )
-		// therefore filteredSections in handleOr and handleAnd stores the result of each recursion of each branches inside the where.LOGIC
-
-		if (where.OR) {
-			return this.handleOr(where, sections, queryId);
-		}
-
-		if (where.AND) {
-			return this.handleAnd(where, sections, queryId);
-		}
-
-		throw new InsightError(`Invalid logical operator: ${where[0]}`);
-	}
-
-	private async handleOr(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		if (where.OR.length === 0) {
-			throw new InsightError("Invalid Query Syntax");
-		}
-
-		const orPromises = where.OR.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
-
-		const filteredSections = await Promise.all(orPromises);
-
-		// check whether the section is found in one of the filteredSections members
-		function sectionChecker(s: Section): boolean {
-			for (const x of filteredSections) {
-				if (x.includes(s)) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		return sections.filter((s: Section) => {
-			return sectionChecker(s);
-		});
-	}
-
-	private async handleAnd(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		if (where.AND.length === 0) {
-			throw new InsightError("Invalid Query Syntax");
-		}
-
-		const andPromises = where.AND.map(async (condition: any) => this.handleWhere(condition, sections, queryId));
-
-		const filteredSections = await Promise.all(andPromises);
-
-		return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section)));
-	}
-
-	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
-		const filteredSections = await this.handleWhere(where.NOT, sections, queryId);
-		return sections.filter((s: Section) => {
-			return !filteredSections.includes(s);
-		});
-	}
-
 	private async loadDatasetsFromDisk(k: InsightDatasetKind): Promise<void> {
 		if (k === InsightDatasetKind.Sections) {
 			const exist = await fs.pathExists("./data/Datasets.json");
@@ -366,7 +284,6 @@ export default class InsightFacade implements IInsightFacade {
 		});
 
 		const fulfillPromises = await Promise.all(listPromises);
-
 		for (const course of fulfillPromises) {
 			for (const section of course) {
 				const dumpSection = new Section(section);
