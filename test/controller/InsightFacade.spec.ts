@@ -30,7 +30,7 @@ describe("InsightFacade", function () {
 		sections = await getContentFromArchives("pair.zip");
 		sections1 = await getContentFromArchives("novalid.zip");
 		sections2 = await getContentFromArchives("nofolder.zip");
-		rooms = await getContentFromArchives("rooms.zip");
+		rooms = await getContentFromArchives("campus.zip");
 
 		// Just in case there is anything hanging around from a previous run of the test suite
 		await clearDisk();

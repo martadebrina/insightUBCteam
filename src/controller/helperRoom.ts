@@ -6,7 +6,7 @@ export class HelperRoom {
 	public async extractRoomData(buildingLinks: string[], buildings: any[], zipData: JSZip): Promise<any[]> {
 		const roomPromises = buildingLinks.map(async (link, index) => {
 			const building = buildings[index];
-			const roomFilePath = this.getRoomFilePath(zipData, link);
+			const roomFilePath = await this.getRoomFilePath(zipData, link);
 			const roomFile = zipData.file(roomFilePath);
 			//console.log(roomFile);
 			if (!roomFile) {
@@ -19,14 +19,23 @@ export class HelperRoom {
 			// find room table
 			const tables = this.findAllNodesByName(roomDocument, "table");
 			const roomTable = tables.find((table) => this.isValidRoomTable(table));
+			//console.log(roomTable);
 			if (!roomTable) {
 				throw new InsightError("no valid room table");
 			}
 			//console.log(this.extractRoom(roomTable, building))
-			return this.extractRoom(roomTable, building);
+			return await this.extractRoom(roomTable, building);
 		});
-
-		const rooms = (await Promise.all(roomPromises)).flat();
+		//console.log(roomPromises);
+		const roomPromises2 = (await Promise.allSettled(roomPromises)).flat();
+		const rooms = roomPromises2
+			.map((result) => {
+				if (result.status === "fulfilled") {
+					return result.value;
+				}
+			})
+			.flat();
+		//console.log(rooms[0]);
 		return rooms;
 	}
 
@@ -75,14 +84,14 @@ export class HelperRoom {
 		return false;
 	}
 
-	public getRoomFilePath(zipData: JSZip, link: string): string {
+	public async getRoomFilePath(zipData: JSZip, link: string): Promise<string> {
 		// from ChatGPT
 		const num = 2;
 		const adjustedLink = link.startsWith("./") ? link.slice(num) : link;
 		return Object.keys(zipData.files).find((path) => path.endsWith(adjustedLink)) || adjustedLink;
 	}
 
-	public extractRoom(roomTable: any, building: any): any[] {
+	public async extractRoom(roomTable: any, building: any): Promise<any[]> {
 		const rooms: any[] = [];
 		const tbody = roomTable.childNodes.find((child: any) => child.nodeName === "tbody");
 
@@ -92,8 +101,8 @@ export class HelperRoom {
 					fullname: building.fullname,
 					shortname: building.shortname,
 					address: building.address,
-					lat: building.lat,
-					lon: building.lon,
+					lat: 0,
+					lon: 0,
 				};
 
 				for (const td of tr.childNodes) {

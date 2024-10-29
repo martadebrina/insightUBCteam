@@ -105,7 +105,7 @@ export class Room {
 			throw new InsightError("Undefined variable -> invalid section");
 		}
 		try {
-			this.fullname = String(room.id);
+			this.fullname = String(room.fullname);
 			this.shortname = String(room.shortname);
 			this.number = String(room.number);
 			this.name = String(room.name);

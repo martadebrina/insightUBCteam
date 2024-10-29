@@ -97,9 +97,12 @@ export default class InsightFacade implements IInsightFacade {
 		// extract room data
 		const { buildings, buildingLinks } = this.hr.extractBuildingsData(buildingTable);
 		const rooms = await this.hr.extractRoomData(buildingLinks, buildings, zipData);
-
 		for (const room of rooms) {
+			if (!room) {
+				continue;
+			}
 			const roomInstance = new Room(room);
+			//console.log(roomInstance);
 			dumpDatasets.addRoom(roomInstance);
 		}
 		datasets.set(id, dumpDatasets);
