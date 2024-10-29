@@ -131,7 +131,9 @@ export class Room {
 			r.seats !== undefined ||
 			r.type !== undefined ||
 			r.furniture !== undefined ||
-			r.href !== undefined
+			r.href !== undefined ||
+			r.lat !== undefined ||
+			r.lon !== undefined
 		);
 		//tambahin lat and lon
 	}

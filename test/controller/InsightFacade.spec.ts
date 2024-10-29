@@ -389,6 +389,7 @@ describe("InsightFacade", function () {
 				const sortedExpected = sortResults(expected);
 
 				// Compare the sorted results using deep equal
+				// console.log(result);
 				expect(sortedResult).to.deep.equal(sortedExpected);
 				expect(input).to.be.instanceOf(Object);
 			} catch (_err) {
@@ -473,5 +474,6 @@ describe("InsightFacade", function () {
 		it("[invalid/orderfail.json] order not in column", checkQuery);
 		it("[invalid/invalidmkey.json] wrong m key", checkQuery);
 		it("[invalid/invalidskey.json] wrong s key", checkQuery);
+		it("[valid/matchingwildcards.json] matching wildcards", checkQuery);
 	});
 });

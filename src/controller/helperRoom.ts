@@ -1,6 +1,7 @@
 import { InsightError } from "./IInsightFacade";
 import JSZip from "jszip";
 import * as parse5 from "parse5";
+import * as http from "node:http";
 
 export class HelperRoom {
 	public async extractRoomData(buildingLinks: string[], buildings: any[], zipData: JSZip): Promise<any[]> {
@@ -101,8 +102,8 @@ export class HelperRoom {
 					fullname: building.fullname,
 					shortname: building.shortname,
 					address: building.address,
-					lat: 0,
-					lon: 0,
+					lat: building.lat,
+					lon: building.lon,
 				};
 
 				for (const td of tr.childNodes) {
@@ -238,5 +239,55 @@ export class HelperRoom {
 			}
 		}
 		return { buildings, buildingLinks };
+	}
+
+	public async assignLatLon(buildings: any[]): Promise<void> {
+		const geolocationPromises = buildings.map(async (building) => {
+			const geolocation = await this.getGeolocation(building.address);
+			if (geolocation) {
+				building.lat = geolocation.lat;
+				building.lon = geolocation.lon;
+			} else {
+				building.lat = 0;
+				building.lon = 0;
+			}
+		});
+		await Promise.all(geolocationPromises);
+	}
+
+	public async getGeolocation(address: string): Promise<{ lat: number; lon: number } | null> {
+		return new Promise((resolve, reject) => {
+			const encodedAddress = encodeURIComponent(address);
+			const url = `http://cs310.students.cs.ubc.ca:11316/api/v1/project_team<TEAM_NUMBER>/${encodedAddress}`;
+
+			http
+				.get(url, (res) => {
+					let data = "";
+					res.on("data", (chunk) => {
+						data += chunk;
+					});
+
+					const successful = 200;
+					res.on("end", () => {
+						if (res.statusCode === successful) {
+							try {
+								const json = JSON.parse(data);
+								if (json.lat !== undefined && json.lon !== undefined) {
+									resolve({ lat: json.lat, lon: json.lon });
+								} else {
+									resolve(null);
+								}
+							} catch (_error) {
+								reject(new Error("Failed to parse response"));
+							}
+						} else {
+							resolve(null);
+						}
+					});
+				})
+				.on("error", (error) => {
+					reject(new Error(`Request failed: ${error.message}`));
+				});
+		});
 	}
 }
