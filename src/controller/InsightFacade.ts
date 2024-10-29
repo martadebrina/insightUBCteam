@@ -9,13 +9,16 @@ import {
 } from "./IInsightFacade";
 import JSZip, { loadAsync } from "jszip";
 import * as fs from "fs-extra";
-import { Datasets, Section } from "./helperClass";
+import { Datasets, Section, Room } from "./helperClass";
 import { HelperFunction } from "./helperFunction";
+import { HelperRoom } from "./helperRoom";
+import * as parse5 from "parse5";
 // import * as path from "path";
 
 export default class InsightFacade implements IInsightFacade {
 	private datasets = new Map<string, Datasets>();
 	private hf = new HelperFunction();
+	private hr = new HelperRoom();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		await this.loadDatasetsFromDisk(kind);
@@ -23,7 +26,6 @@ export default class InsightFacade implements IInsightFacade {
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
 		}
-
 		if (this.datasets.has(id)) {
 			throw new InsightError("Dataset already exists");
 		}
@@ -31,14 +33,20 @@ export default class InsightFacade implements IInsightFacade {
 		let zipData: JSZip;
 		try {
 			zipData = await loadAsync(content, { base64: true });
-			const files = zipData.folder("courses");
-			if (!files) {
-				throw new InsightError("no courses folder");
+			if (kind === InsightDatasetKind.Sections) {
+				const files = zipData.folder("courses");
+				if (!files) {
+					throw new InsightError("no courses folder");
+				}
+				if (files.length === 0) {
+					throw new InsightError("no content in files");
+				}
+				await this.parseZipFile(id, zipData, this.datasets);
+			} else if (kind === InsightDatasetKind.Rooms) {
+				await this.parseRoomZipFile(id, zipData, this.datasets);
+			} else {
+				throw new InsightError("Invalid dataset kind");
 			}
-			if (files.length === 0) {
-				throw new InsightError("no content in files");
-			}
-			await this.parseZipFile(id, zipData, this.datasets);
 		} catch (_err) {
 			throw new InsightError("Fail to unzip");
 		}
@@ -63,6 +71,39 @@ export default class InsightFacade implements IInsightFacade {
 		await this.saveDatasetsDisk(this.datasets);
 
 		return id;
+	}
+
+	private async parseRoomZipFile(id: string, zipData: JSZip, datasets: Map<string, Datasets>): Promise<void> {
+		const dumpDatasets = new Datasets(InsightDatasetKind.Rooms);
+		const indexFilePath = Object.keys(zipData.files).find((path) => path.endsWith("index.htm"));
+		if (!indexFilePath) {
+			throw new InsightError("no index.htm folderß");
+		}
+		const indexFile = zipData.file(indexFilePath);
+		if (!indexFile) {
+			throw new InsightError("no index file inside the folder");
+		}
+		const indexContent = await indexFile.async("string");
+		const document = parse5.parse(indexContent);
+
+		// find building and classrooms table
+		const tables = this.hr.findAllNodesByName(document, "table");
+		const buildingTable = tables.find((table) => this.hr.isValidBuildingTable(table));
+		//console.log(buildingTable);
+		if (!buildingTable) {
+			throw new InsightError("no valid building table");
+		}
+
+		// extract room data
+		const { buildings, buildingLinks } = this.hr.extractBuildingsData(buildingTable);
+		const rooms = await this.hr.extractRoomData(buildingLinks, buildings, zipData);
+
+		for (const room of rooms) {
+			const roomInstance = new Room(room);
+			dumpDatasets.addRoom(roomInstance);
+		}
+		datasets.set(id, dumpDatasets);
+		await this.saveDatasetsDisk(datasets);
 	}
 
 	public async listDatasets(): Promise<InsightDataset[]> {
@@ -366,7 +407,6 @@ export default class InsightFacade implements IInsightFacade {
 		});
 
 		const fulfillPromises = await Promise.all(listPromises);
-
 		for (const course of fulfillPromises) {
 			for (const section of course) {
 				const dumpSection = new Section(section);

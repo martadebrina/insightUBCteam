@@ -23,12 +23,14 @@ describe("InsightFacade", function () {
 	let sections: string;
 	let sections1: string;
 	let sections2: string;
+	let rooms: string;
 
 	before(async function () {
 		// This block runs once and loads the datasets.
 		sections = await getContentFromArchives("pair.zip");
 		sections1 = await getContentFromArchives("novalid.zip");
 		sections2 = await getContentFromArchives("nofolder.zip");
+		rooms = await getContentFromArchives("rooms.zip");
 
 		// Just in case there is anything hanging around from a previous run of the test suite
 		await clearDisk();
@@ -158,6 +160,22 @@ describe("InsightFacade", function () {
 				expect.fail("should reject dataset with no courses folder");
 			} catch (_err) {
 				expect(_err).to.be.instanceOf(InsightError);
+			}
+		});
+
+		it("should add a valid room dataset successfully", async function () {
+			try {
+				const result = await facade.addDataset("rooms", rooms, InsightDatasetKind.Rooms);
+				expect(result).to.have.members(["rooms"]);
+
+				const datasets = await facade.listDatasets();
+				expect(datasets).to.deep.include({
+					id: "rooms",
+					kind: InsightDatasetKind.Rooms,
+					numRows: datasets[0].numRows, // Adjust based on actual room count
+				});
+			} catch (_err) {
+				expect.fail("Should have added the room dataset successfully");
 			}
 		});
 	});
