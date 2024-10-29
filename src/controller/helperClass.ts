@@ -2,11 +2,13 @@ import { InsightDatasetKind, InsightError } from "./IInsightFacade";
 
 export class Datasets {
 	public sections: Section[];
+	public rooms: Room[];
 	public numRows: number;
 	public kind: InsightDatasetKind;
 
 	constructor(k: InsightDatasetKind) {
 		this.sections = [];
+		this.rooms = [];
 		this.numRows = 0;
 		this.kind = k;
 	}
@@ -14,6 +16,11 @@ export class Datasets {
 	public addSection(newCourse: Section): void {
 		++this.numRows;
 		this.sections.push(newCourse);
+	}
+
+	public addRoom(newRoom: Room): void {
+		++this.numRows;
+		this.rooms.push(newRoom);
 	}
 }
 
@@ -98,13 +105,13 @@ export class Room {
 			throw new InsightError("Undefined variable -> invalid section");
 		}
 		try {
-			this.fullname = String(room.id);
+			this.fullname = String(room.fullname);
 			this.shortname = String(room.shortname);
 			this.number = String(room.number);
 			this.name = String(room.name);
 			this.address = String(room.address);
-			this.lat = this.anyToNum(room.lat);
-			this.lon = this.anyToNum(room.lon);
+			this.lat = 0;
+			this.lon = 0;
 			this.seats = this.anyToNum(room.seats);
 			this.type = String(room.type);
 			this.furniture = String(room.furniture);
@@ -115,7 +122,18 @@ export class Room {
 	}
 
 	public isValidRoom(r: any): boolean {
-		return typeof r === "string";
+		return (
+			r.fullname !== undefined ||
+			r.shortname !== undefined ||
+			r.number !== undefined ||
+			r.name !== undefined ||
+			r.address !== undefined ||
+			r.seats !== undefined ||
+			r.type !== undefined ||
+			r.furniture !== undefined ||
+			r.href !== undefined
+		);
+		//tambahin lat and lon
 	}
 
 	public anyToNum(n: any): number {
