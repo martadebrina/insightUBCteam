@@ -111,7 +111,7 @@ export class HelperRoom {
 						this.getRoomAttribute(td, roomData);
 					}
 				}
-				roomData.name = `rooms_${roomData.shortname}_${roomData.number}`;
+				roomData.name = `${roomData.shortname}_${roomData.number}`;
 				if (Object.keys(roomData).length > 0) {
 					rooms.push(roomData);
 				}
@@ -124,11 +124,13 @@ export class HelperRoom {
 		const classAttr = td.attrs.find((attr: any) => attr.name === "class");
 		if (classAttr) {
 			if (classAttr.value.includes("views-field views-field-field-room-number")) {
-				roomData.number = td.childNodes[0]?.value.trim();
+				roomData.number = td.childNodes[1].childNodes[0]?.value.trim();
+				//console.log(roomData.number);
 			} else if (classAttr.value.includes("views-field views-field-field-room-capacity")) {
 				roomData.seats = parseInt(td.childNodes[0]?.value.trim(), 10);
 			} else if (classAttr.value.includes("views-field views-field-field-room-furniture")) {
 				roomData.furniture = td.childNodes[0]?.value.trim();
+				//console.log(roomData.furniture);
 			} else if (classAttr.value.includes("views-field views-field-field-room-type")) {
 				roomData.type = td.childNodes[0]?.value.trim();
 			} else if (classAttr.value.includes("views-field views-field-nothing")) {
@@ -256,10 +258,12 @@ export class HelperRoom {
 		await Promise.all(geolocationPromises);
 	}
 
-	public async getGeolocation(address: string): Promise<{ lat: number; lon: number } | null> {
-		return new Promise((resolve, _reject) => {
+	public async getGeolocation(address: string): Promise<{ lat: number | undefined; lon: number | undefined} | null> {
+		// const http = require("node:http");
+		return new Promise((resolve, reject) => {
 			const encodedAddress = encodeURIComponent(address);
 			const url = `http://cs310.students.cs.ubc.ca:11316/api/v1/project_team139/${encodedAddress}`;
+
 			http
 				.get(url, (res) => {
 					let data = "";
@@ -272,22 +276,21 @@ export class HelperRoom {
 						if (res.statusCode === successful) {
 							try {
 								const json = JSON.parse(data);
-								if (json.lat !== undefined && json.lon !== undefined) {
-									//console.log(json.lat);
+								if (json.lat !== undefined || json.lon !== undefined) {
 									resolve({ lat: json.lat, lon: json.lon });
 								} else {
 									resolve(null);
 								}
 							} catch (_error) {
-								resolve(null);
+								reject(new Error("Failed to parse response"));
 							}
 						} else {
-							resolve(null);
+							reject(new Error("Failed to parse response"));
 						}
 					});
 				})
-				.on("error", (_error) => {
-					resolve(null);
+				.on("error", (error) => {
+					reject(new Error(`Request failed: ${error.message}`));
 				});
 		});
 	}
