@@ -258,7 +258,7 @@ export class HelperRoom {
 		await Promise.all(geolocationPromises);
 	}
 
-	public async getGeolocation(address: string): Promise<{ lat: number | undefined; lon: number | undefined} | null> {
+	public async getGeolocation(address: string): Promise<{ lat: number | undefined; lon: number | undefined } | null> {
 		// const http = require("node:http");
 		return new Promise((resolve, reject) => {
 			const encodedAddress = encodeURIComponent(address);
