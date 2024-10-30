@@ -163,7 +163,7 @@ describe("InsightFacade", function () {
 			}
 		});
 
-		it("should add a valid room dataset successfully", async function () {
+		it.only("should add a valid room dataset successfully", async function () {
 			try {
 				const result = await facade.addDataset("rooms", rooms, InsightDatasetKind.Rooms);
 				expect(result).to.have.members(["rooms"]);

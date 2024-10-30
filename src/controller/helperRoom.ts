@@ -243,6 +243,7 @@ export class HelperRoom {
 
 	public async assignLatLon(buildings: any[]): Promise<void> {
 		const geolocationPromises = buildings.map(async (building) => {
+			//console.log(building.address);
 			const geolocation = await this.getGeolocation(building.address);
 			if (geolocation) {
 				building.lat = geolocation.lat;
@@ -256,10 +257,9 @@ export class HelperRoom {
 	}
 
 	public async getGeolocation(address: string): Promise<{ lat: number; lon: number } | null> {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve, _reject) => {
 			const encodedAddress = encodeURIComponent(address);
-			const url = `http://cs310.students.cs.ubc.ca:11316/api/v1/project_team<TEAM_NUMBER>/${encodedAddress}`;
-
+			const url = `http://cs310.students.cs.ubc.ca:11316/api/v1/project_team139/${encodedAddress}`;
 			http
 				.get(url, (res) => {
 					let data = "";
@@ -273,20 +273,21 @@ export class HelperRoom {
 							try {
 								const json = JSON.parse(data);
 								if (json.lat !== undefined && json.lon !== undefined) {
+									//console.log(json.lat);
 									resolve({ lat: json.lat, lon: json.lon });
 								} else {
 									resolve(null);
 								}
 							} catch (_error) {
-								reject(new Error("Failed to parse response"));
+								resolve(null);
 							}
 						} else {
 							resolve(null);
 						}
 					});
 				})
-				.on("error", (error) => {
-					reject(new Error(`Request failed: ${error.message}`));
+				.on("error", (_error) => {
+					resolve(null);
 				});
 		});
 	}
