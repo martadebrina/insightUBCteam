@@ -5,6 +5,7 @@ import * as http from "node:http";
 
 export class HelperRoom {
 	public async extractRoomData(buildingLinks: string[], buildings: any[], zipData: JSZip): Promise<any[]> {
+		let j = 0;
 		const roomPromises = buildingLinks.map(async (link, index) => {
 			const building = buildings[index];
 			const roomFilePath = await this.getRoomFilePath(zipData, link);
@@ -25,6 +26,7 @@ export class HelperRoom {
 				throw new InsightError("no valid room table");
 			}
 			//console.log(this.extractRoom(roomTable, building))
+			j++;
 			return await this.extractRoom(roomTable, building);
 		});
 		//console.log(roomPromises);
@@ -36,7 +38,7 @@ export class HelperRoom {
 				}
 			})
 			.flat();
-		//console.log(rooms[0]);
+		//console.log(j);
 		return rooms;
 	}
 
@@ -244,21 +246,24 @@ export class HelperRoom {
 	}
 
 	public async assignLatLon(buildings: any[]): Promise<void> {
+		let i =0;
 		const geolocationPromises = buildings.map(async (building) => {
 			//console.log(building.address);
 			const geolocation = await this.getGeolocation(building.address);
-			if (geolocation) {
+			//console.log(geolocation);
+			i++;
+			if (geolocation.lat !== undefined || geolocation.lon !== undefined) {
 				building.lat = geolocation.lat;
 				building.lon = geolocation.lon;
 			} else {
-				building.lat = 0;
-				building.lon = 0;
+				throw new InsightError("no geo");
 			}
 		});
+		//console.log(i);
 		await Promise.all(geolocationPromises);
 	}
 
-	public async getGeolocation(address: string): Promise<{ lat: number | undefined; lon: number | undefined } | null> {
+	public async getGeolocation(address: string): Promise<any> {
 		// const http = require("node:http");
 		return new Promise((resolve, reject) => {
 			const encodedAddress = encodeURIComponent(address);
@@ -276,21 +281,17 @@ export class HelperRoom {
 						if (res.statusCode === successful) {
 							try {
 								const json = JSON.parse(data);
-								if (json.lat !== undefined || json.lon !== undefined) {
-									resolve({ lat: json.lat, lon: json.lon });
-								} else {
-									resolve(null);
-								}
+								resolve(json);
 							} catch (_error) {
-								reject(new Error("Failed to parse response"));
+								reject(new InsightError("Failed to parse response"));
 							}
 						} else {
-							reject(new Error("Failed to parse response"));
+							reject(new InsightError("Failed to parse response"));
 						}
 					});
 				})
 				.on("error", (error) => {
-					reject(new Error(`Request failed: ${error.message}`));
+					reject(error);
 				});
 		});
 	}

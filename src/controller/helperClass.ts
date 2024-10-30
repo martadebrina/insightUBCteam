@@ -141,6 +141,7 @@ export class Room {
 	public anyToNum(n: any): number {
 		const num = Number(n);
 		if (isNaN(num)) {
+			//console.log("hi");
 			throw new InsightError("n is not a number");
 		}
 		return num;
