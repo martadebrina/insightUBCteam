@@ -106,7 +106,7 @@ export default class InsightFacade implements IInsightFacade {
 				continue;
 			}
 			const roomInstance = new Room(room);
-			console.log(roomInstance);
+			//console.log(roomInstance);
 			dumpDatasets.addRoom(roomInstance);
 		}
 		datasets.set(id, dumpDatasets);
