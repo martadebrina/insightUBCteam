@@ -123,16 +123,16 @@ export class Room {
 
 	public isValidRoom(r: any): boolean {
 		return (
-			r.fullname !== undefined ||
-			r.shortname !== undefined ||
-			r.number !== undefined ||
-			r.name !== undefined ||
-			r.address !== undefined ||
-			r.seats !== undefined ||
-			r.type !== undefined ||
-			r.furniture !== undefined ||
-			r.href !== undefined ||
-			r.lat !== undefined ||
+			r.fullname !== undefined &&
+			r.shortname !== undefined &&
+			r.number !== undefined &&
+			r.name !== undefined &&
+			r.address !== undefined &&
+			r.seats !== undefined &&
+			r.type !== undefined &&
+			r.furniture !== undefined &&
+			r.href !== undefined &&
+			r.lat !== undefined &&
 			r.lon !== undefined
 		);
 		//tambahin lat and lon
@@ -141,7 +141,6 @@ export class Room {
 	public anyToNum(n: any): number {
 		const num = Number(n);
 		if (isNaN(num)) {
-			//console.log("hi");
 			throw new InsightError("n is not a number");
 		}
 		return num;
