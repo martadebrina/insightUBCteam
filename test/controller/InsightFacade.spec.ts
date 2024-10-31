@@ -479,5 +479,7 @@ describe("InsightFacade", function () {
 		it("[valid/successfulcomplete.json] normal example from specification", checkQuery);
 		it("[valid/successfulwithoutorder.json] normal example from specification without order", checkQuery);
 		it("[valid/extend.json] extend old performquery for rooms", checkQuery);
+		it("[valid/ordercompositenotransform.json] composite order up without new column transformation", checkQuery);
+		it("[valid/ordercompositedownnotransform.json] composite order down without new column transformation", checkQuery);
 	});
 });

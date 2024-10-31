@@ -1,0 +1,33 @@
+{
+	"title": "Composite order up without new column transformation",
+	"input": {
+		"WHERE": {
+			"AND": [
+				{
+					"IS": {
+						"rooms_furniture": "*Tables*"
+					}
+				},
+				{
+					"GT": {
+						"rooms_seats": 300
+					}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": ["rooms_shortname", "rooms_name"],
+			"ORDER": {
+				"dir": "UP",
+				"keys": ["rooms_name", "rooms_shortname"]
+			}
+		}
+	},
+	"errorExpected": false,
+	"expected": [
+		{ "rooms_shortname": "HEBB", "rooms_name": "HEBB_100" },
+		{ "rooms_shortname": "LSC", "rooms_name": "LSC_1001" },
+		{ "rooms_shortname": "LSC", "rooms_name": "LSC_1002" },
+		{ "rooms_shortname": "OSBO", "rooms_name": "OSBO_A" }
+	]
+}
