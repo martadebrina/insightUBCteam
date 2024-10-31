@@ -1,9 +1,11 @@
 import { InsightError } from "./IInsightFacade";
 import { Section } from "./helperClass";
 import { HelperFunction } from "./helperFunction";
+import { HelperSort } from "./helperSort";
 
 export class HelperTransformation {
 	private hf = new HelperFunction();
+	private hs = new HelperSort();
 
 	public async handleTransformation(trans: any, sections: Section[]): Promise<any[]> {
 		// Validate query since the process will be long and we don't want errors
