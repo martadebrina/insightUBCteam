@@ -1,5 +1,5 @@
 import { InsightError } from "./IInsightFacade";
-import { Section } from "./helperClass";
+import { Room, Section } from "./helperClass";
 import { HelperFunction } from "./helperFunction";
 import { HelperSort } from "./helperSort";
 
@@ -7,9 +7,9 @@ export class HelperTransformation {
 	private hf = new HelperFunction();
 	private hs = new HelperSort();
 
-	public async handleTransformation(trans: any, sections: Section[]): Promise<any[]> {
+	public async handleTransformation(trans: any, sections: Section[] | Room[]): Promise<any[]> {
 		// Validate query since the process will be long and we don't want errors
-		if (!trans.GROUP || trans.GROUP.length === 0 || !trans.APPLY || trans.APPLY.length === 0) {
+		if (!trans.GROUP || trans.GROUP.length === 0 || !trans.APPLY) {
 			throw new InsightError("invalid ebnf");
 		}
 		const group: string[] = trans.GROUP.map((item: string) => {
@@ -20,7 +20,7 @@ export class HelperTransformation {
 		// group by instructor and title, we will have ["Jean", "310"], ["Casey", "310"],
 		// ["Kelly", "210"], and so on.
 		// the Section[] will contain all the filtered sections that qualifies
-		const groupedData = new Map<(string | number)[], Section[]>();
+		const groupedData = new Map<(string | number)[], Section[] | Room[]>();
 
 		sections.forEach((section) => {
 			// group is ["instructor", "title"]
@@ -31,26 +31,35 @@ export class HelperTransformation {
 			group.forEach((col) => {
 				// dataName example "Jean", "310", 87.7
 				const dataName = this.hf.getParamAll(col, section);
+				//console.log(dataName);
 				dataList.push(dataName);
 			});
 
+			//console.log(dataList);
+
 			const tryAccessMapElement = groupedData.get(dataList);
+			//console.log(tryAccessMapElement);
 			if (tryAccessMapElement) {
 				// dataList found, just need to add the section
-				tryAccessMapElement.push(section);
+				//console.log("hi");
+				tryAccessMapElement.push(section as any);
 			} else {
 				// undefined since key does not exist
-				groupedData.set(dataList, [section]);
+				groupedData.set(dataList, [section as any]);
 			}
 		});
 		// Notice that 1 section can only be at one group, so this algorithm is possible
 
-		const result = this.handleApply(trans.APPLY, groupedData);
+		//console.log(groupedData);
+
+		const result = this.handleApply(trans.APPLY, groupedData as any, trans.GROUP);
+
+		//console.log(result);
 
 		return result;
 	}
 
-	private handleApply(apply: any[], groupedData: Map<(string | number)[], Section[]>): any[] {
+	private handleApply(apply: any[], groupedData: Map<(string | number)[], Section[]>, group: string): any[] {
 		// one result will be {groupKey1: Value1 , groupKey2: Value2, new_col1: agg1, new_col2: agg2, ...}
 		const results: any[] = [];
 
@@ -60,9 +69,11 @@ export class HelperTransformation {
 			// preserve each Record <new_col1, resultof{"MIN" : s_key}>
 			const applyResult: Record<string, any> = {};
 
+			//console.log(groupKey);
+
 			// Add group keys to result, they will be the new_col s
-			groupKey.forEach((key, idx) => {
-				applyResult[`groupField${idx}`] = key;
+			groupKey.forEach((key) => {
+				applyResult[group[0]] = key;
 			});
 
 			// Apply each rule to get the result in form of compacted fields,

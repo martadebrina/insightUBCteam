@@ -154,7 +154,12 @@ export default class InsightFacade implements IInsightFacade {
 
 		const { foundDataset, queryId } = await this.validateQuery(WHERE, OPTIONS, query);
 
-		let filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
+		let filtered: Section[] | Room[] = [];
+		if (foundDataset.kind === InsightDatasetKind.Sections) {
+			filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
+		} else if (foundDataset.kind === InsightDatasetKind.Rooms) {
+			filtered = await this.hw.handleWhere(WHERE, foundDataset.rooms, queryId);
+		}
 
 		if (filtered.length === 0) {
 			return [];
@@ -232,6 +237,8 @@ export default class InsightFacade implements IInsightFacade {
 		const { COLUMNS, ORDER } = options;
 		const columnParam: string[] = [];
 
+		//console.log(COLUMNS);
+
 		// Map filtered sections or transformed data to the required columns
 		const results: InsightResult[] = filtered.map((item) => {
 			const result: any = {};
@@ -245,9 +252,11 @@ export default class InsightFacade implements IInsightFacade {
 					throw new InsightError("Invalid dataset");
 				}
 				columnParam.push(field);
+				//console.log(columnParam);
 
 				// Use this.hf.getParamAll for the original sections or direct access for transformed data
 				result[col] = this.hf.getParamAll(field, item); // Assume item is a Section or transformed object
+				//console.log("hi");
 			});
 
 			return result;
@@ -257,6 +266,8 @@ export default class InsightFacade implements IInsightFacade {
 		if (ORDER) {
 			this.hs.sortResults(results, ORDER, queryId, columnParam);
 		}
+
+		//console.log(results);
 
 		return results;
 	}
