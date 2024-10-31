@@ -100,7 +100,9 @@ export default class InsightFacade implements IInsightFacade {
 		const { buildings, buildingLinks } = this.hr.extractBuildingsData(buildingTable);
 
 		await this.hr.assignLatLon(buildings);
+		
 		const rooms = await this.hr.extractRoomData(buildingLinks, buildings, zipData);
+		let i =0;
 		for (const room of rooms) {
 			if (!room) {
 				continue;
@@ -108,7 +110,10 @@ export default class InsightFacade implements IInsightFacade {
 			const roomInstance = new Room(room);
 			//console.log(roomInstance);
 			dumpDatasets.addRoom(roomInstance);
+			i++;
 		}
+		//console.log(i);
+		//console.log(rooms.length);
 		datasets.set(id, dumpDatasets);
 		await this.saveDatasetsDisk(datasets);
 	}
@@ -244,7 +249,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	private async loadDatasetsFromDisk(k: InsightDatasetKind): Promise<void> {
-		if (k === InsightDatasetKind.Sections) {
+		if (k === InsightDatasetKind.Sections || k === InsightDatasetKind.Rooms) {
 			const exist = await fs.pathExists("./data/Datasets.json");
 
 			if (!exist) {
@@ -259,6 +264,7 @@ export default class InsightFacade implements IInsightFacade {
 				}
 				const newData = new Datasets(k);
 				newData.sections = dataset.sections;
+				newData.rooms = dataset.rooms;
 				newData.numRows = dataset.numRows;
 				newData.kind = dataset.kind;
 				this.datasets.set(id, newData);
