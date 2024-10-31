@@ -5,7 +5,7 @@ import * as http from "node:http";
 
 export class HelperRoom {
 	public async extractRoomData(buildingLinks: string[], buildings: any[], zipData: JSZip): Promise<any[]> {
-		let j = 0;
+		//let j = 0;
 		const roomPromises = buildingLinks.map(async (link, index) => {
 			const building = buildings[index];
 			const roomFilePath = await this.getRoomFilePath(zipData, link);
@@ -26,7 +26,7 @@ export class HelperRoom {
 				throw new InsightError("no valid room table");
 			}
 			//console.log(this.extractRoom(roomTable, building))
-			j++;
+			//j++;
 			return await this.extractRoom(roomTable, building);
 		});
 		//console.log(roomPromises);
@@ -246,12 +246,12 @@ export class HelperRoom {
 	}
 
 	public async assignLatLon(buildings: any[]): Promise<void> {
-		let i =0;
+		//let i =0;
 		const geolocationPromises = buildings.map(async (building) => {
 			//console.log(building.address);
 			const geolocation = await this.getGeolocation(building.address);
 			//console.log(geolocation);
-			i++;
+			//i++;
 			if (geolocation.lat !== undefined || geolocation.lon !== undefined) {
 				building.lat = geolocation.lat;
 				building.lon = geolocation.lon;

@@ -14,6 +14,7 @@ import { HelperFunction } from "./helperFunction";
 import { HelperRoom } from "./helperRoom";
 import * as parse5 from "parse5";
 import { HelperWhere } from "./helperWhere";
+import { HelperTransformation } from "./helperTransformation";
 // import * as path from "path";
 
 export default class InsightFacade implements IInsightFacade {
@@ -21,6 +22,7 @@ export default class InsightFacade implements IInsightFacade {
 	private hf = new HelperFunction();
 	private hr = new HelperRoom();
 	private hw = new HelperWhere();
+	private ht = new HelperTransformation();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
 		await this.loadDatasetsFromDisk(kind);
@@ -100,9 +102,9 @@ export default class InsightFacade implements IInsightFacade {
 		const { buildings, buildingLinks } = this.hr.extractBuildingsData(buildingTable);
 
 		await this.hr.assignLatLon(buildings);
-		
+
 		const rooms = await this.hr.extractRoomData(buildingLinks, buildings, zipData);
-		let i =0;
+		//let i = 0;
 		for (const room of rooms) {
 			if (!room) {
 				continue;
@@ -110,7 +112,7 @@ export default class InsightFacade implements IInsightFacade {
 			const roomInstance = new Room(room);
 			//console.log(roomInstance);
 			dumpDatasets.addRoom(roomInstance);
-			i++;
+			//i++;
 		}
 		//console.log(i);
 		//console.log(rooms.length);
@@ -142,25 +144,20 @@ export default class InsightFacade implements IInsightFacade {
 		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
 		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
-		// go through the query (from chatGPT)
-		const { WHERE, OPTIONS } = query as any;
+		if (typeof query !== "object" || query === null) {
+			throw new InsightError();
+		}
 
-		// check valid WHERE and valid OPTION
+		const { WHERE, OPTIONS, TRANSFORMATIONS } = query as any;
+
 		if (!WHERE || !OPTIONS) {
-			throw new InsightError("invalid format");
-		}
-
-		if (typeof query !== "object") {
-			throw new InsightError();
-		}
-
-		if (!query) {
-			throw new InsightError();
+			// check valid WHERE and valid OPTION
+			throw new InsightError("invalid format: WHERE and OPTIONS are required");
 		}
 
 		for (const x of Object.keys(query)) {
-			if (x !== "WHERE" && x !== "OPTIONS") {
-				throw new InsightError();
+			if (x !== "WHERE" && x !== "OPTIONS" && x !== "TRANSFORMATIONS") {
+				throw new InsightError("Unexpected key found in query");
 			}
 		}
 
@@ -174,13 +171,18 @@ export default class InsightFacade implements IInsightFacade {
 			throw new InsightError("reference not found");
 		}
 
-		const filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
+		let filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
 
 		if (filtered.length === 0) {
 			return [];
 		}
 
-		// handle OPTIONS
+		// handle TRANSFORMATIONS when possible
+		if (TRANSFORMATIONS) {
+			filtered = await this.ht.handleTransformation(TRANSFORMATIONS, filtered);
+		}
+
+		// HANDLE OPTIONS
 		const result = await this.handleOptions(OPTIONS, filtered, queryId);
 
 		const limit = 5000;
@@ -239,7 +241,7 @@ export default class InsightFacade implements IInsightFacade {
 			const bValue = b[order];
 
 			if (typeof aValue === "string" && typeof bValue === "string") {
-				return aValue.localeCompare(bValue); // Lexical comparison for strings
+				return aValue > bValue ? 1 : 0; // Lexical comparison for strings
 			} else if (typeof aValue === "number" && typeof bValue === "number") {
 				return aValue - bValue; // Numeric comparison for numbers
 			} else {
