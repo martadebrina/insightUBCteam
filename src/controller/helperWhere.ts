@@ -57,47 +57,85 @@ export class HelperWhere {
 		if (typeof value !== "string") {
 			throw new InsightError("invalid skey");
 		}
-		let a: Section[] | Room[] = [];
 
+		const valueType = this.hf.getValueType(value);
+
+		// Use helper function to filter based on Section or Room type
 		if (this.hf.isSectionArray(sections)) {
-			a = sections.filter((s: Section) => {
-				const valueType = this.hf.getValueType(value);
-				const compareValue = this.hf.getParamString(param, s);
-				if (valueType === "startend") {
-					const newString = value.slice(1, -1);
-					return compareValue.includes(newString);
-				} else if (valueType === "start") {
-					const newString = value.slice(1);
-					// console.log(newString);
-					return compareValue.endsWith(newString);
-				} else if (valueType === "end") {
-					const newString = value.slice(0, -1);
-					return compareValue.startsWith(newString);
-				} else {
-					return compareValue === value;
-				}
-			}) as Section[];
+			return this.filterByComparison(sections, valueType, value, param) as Section[];
 		} else if (this.hf.isRoomArray(sections)) {
-			a = sections.filter((s: Room) => {
-				const valueType = this.hf.getValueType(value);
-				const compareValue = this.hf.getParamString(param, s);
-				if (valueType === "startend") {
-					const newString = value.slice(1, -1);
-					return compareValue.includes(newString);
-				} else if (valueType === "start") {
-					const newString = value.slice(1);
-					// console.log(newString);
-					return compareValue.endsWith(newString);
-				} else if (valueType === "end") {
-					const newString = value.slice(0, -1);
-					return compareValue.startsWith(newString);
-				} else {
-					return compareValue === value;
-				}
-			}) as Room[];
+			return this.filterByComparison(sections, valueType, value, param) as Room[];
 		}
 
-		return a;
+		throw new InsightError("Unexpected type in sections array");
+		// let a: Section[] | Room[] = [];
+
+		// if (this.hf.isSectionArray(sections)) {
+		// 	a = sections.filter((s: Section) => {
+		// 		const valueType = this.hf.getValueType(value);
+		// 		const compareValue = this.hf.getParamString(param, s);
+		// 		if (valueType === "startend") {
+		// 			const newString = value.slice(1, -1);
+		// 			return compareValue.includes(newString);
+		// 		} else if (valueType === "start") {
+		// 			const newString = value.slice(1);
+		// 			// console.log(newString);
+		// 			return compareValue.endsWith(newString);
+		// 		} else if (valueType === "end") {
+		// 			const newString = value.slice(0, -1);
+		// 			return compareValue.startsWith(newString);
+		// 		} else {
+		// 			return compareValue === value;
+		// 		}
+		// 	}) as Section[];
+		// } else if (this.hf.isRoomArray(sections)) {
+		// 	a = sections.filter((s: Room) => {
+		// 		const valueType = this.hf.getValueType(value);
+		// 		const compareValue = this.hf.getParamString(param, s);
+		// 		if (valueType === "startend") {
+		// 			const newString = value.slice(1, -1);
+		// 			return compareValue.includes(newString);
+		// 		} else if (valueType === "start") {
+		// 			const newString = value.slice(1);
+		// 			// console.log(newString);
+		// 			return compareValue.endsWith(newString);
+		// 		} else if (valueType === "end") {
+		// 			const newString = value.slice(0, -1);
+		// 			return compareValue.startsWith(newString);
+		// 		} else {
+		// 			return compareValue === value;
+		// 		}
+		// 	}) as Room[];
+		// }
+
+		// return a;
+	}
+
+	private filterByComparison<T extends Section | Room>(
+		items: T[],
+		valueType: string,
+		value: string,
+		param: string
+	): T[] {
+		return items.filter((item) => {
+			const compareValue = this.hf.getParamString(param, item);
+			return this.compareValues(valueType, value, compareValue);
+		});
+	}
+
+	private compareValues(valueType: string, value: string, compareValue: string): boolean {
+		if (valueType === "startend") {
+			const newString = value.slice(1, -1);
+			return compareValue.includes(newString);
+		} else if (valueType === "start") {
+			const newString = value.slice(1);
+			return compareValue.endsWith(newString);
+		} else if (valueType === "end") {
+			const newString = value.slice(0, -1);
+			return compareValue.startsWith(newString);
+		} else {
+			return compareValue === value;
+		}
 	}
 
 	private async handleLogicComp(
@@ -152,15 +190,15 @@ export class HelperWhere {
 				filteredSections.every((filtered) => filtered.includes(section))
 			) as Section[];
 		} else if (this.hf.isRoomArray(sections)) {
-			return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section))) as Room[];
+			return sections.filter((section) => filteredSections.every((f) => f.includes(section))) as Room[];
 		}
 
 		throw new InsightError("no valid kind");
 		//return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section))) as Section[] | Room[];
 	}
 
-	private async handleNegation(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
-		const filteredSections = await this.handleWhere(where.NOT, sections, queryId);
+	private async handleNegation(where: any, sections: Section[] | Room[], id: string): Promise<Section[] | Room[]> {
+		const filteredSections = await this.handleWhere(where.NOT, sections, id);
 		if (this.hf.isSectionArray(filteredSections) && this.hf.isSectionArray(sections)) {
 			return sections.filter((s: Section) => {
 				return !filteredSections.includes(s);
