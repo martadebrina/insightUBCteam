@@ -389,7 +389,7 @@ describe("InsightFacade", function () {
 				const sortedExpected = sortResults(expected);
 
 				// Compare the sorted results using deep equal
-				// console.log(result);
+				//console.log(result);
 				expect(sortedResult).to.deep.equal(sortedExpected);
 				expect(input).to.be.instanceOf(Object);
 			} catch (_err) {
@@ -485,5 +485,6 @@ describe("InsightFacade", function () {
 		it("[valid/minsumavgcountmultisort.json] Min Sum Avg Count Transformation with multi col sort", checkQuery);
 		it("[invalid/invalidcustomcolnames.json] selected custom colnames doesn't exist post transformation", checkQuery);
 		it("[invalid/invalidordernotincolumn.json] order not in column", checkQuery);
+		it("[valid/idtransform.json] id from transformation query", checkQuery);
 	});
 });

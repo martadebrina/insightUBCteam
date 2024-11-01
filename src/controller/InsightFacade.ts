@@ -149,7 +149,7 @@ export default class InsightFacade implements IInsightFacade {
 
 		const { WHERE, OPTIONS, TRANSFORMATIONS } = query as any;
 
-		const { foundDataset, queryId } = await this.validateQuery(WHERE, OPTIONS, query);
+		const { foundDataset, queryId } = await this.validateQuery(WHERE, OPTIONS, TRANSFORMATIONS, query);
 
 		let filtered: Section[] | Room[] = [];
 		if (foundDataset.kind === InsightDatasetKind.Sections) {
@@ -182,7 +182,7 @@ export default class InsightFacade implements IInsightFacade {
 		return result;
 	}
 
-	private async validateQuery(WHERE: any, OPTIONS: any, query: object): Promise<any> {
+	private async validateQuery(WHERE: any, OPTIONS: any, TRANSFORMATIONS: any, query: any): Promise<any> {
 		if (!WHERE || !OPTIONS) {
 			// check valid WHERE and valid OPTION
 			throw new InsightError("invalid format: WHERE and OPTIONS are required");
@@ -194,8 +194,13 @@ export default class InsightFacade implements IInsightFacade {
 			}
 		}
 
+		let queryId: string;
 		// get id from first element of column
-		const queryId = await this.hf.getQueryId(OPTIONS);
+		if (query.TRANSFORMATIONS) {
+			queryId = await this.hf.getQueryIdT(TRANSFORMATIONS);
+		} else {
+			queryId = await this.hf.getQueryId(OPTIONS);
+		}
 
 		const foundDataset = this.datasets.get(queryId);
 
