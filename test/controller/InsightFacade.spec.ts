@@ -481,5 +481,9 @@ describe("InsightFacade", function () {
 		it("[valid/extend.json] extend old performquery for rooms", checkQuery);
 		it("[valid/ordercompositenotransform.json] composite order up without new column transformation", checkQuery);
 		it("[valid/ordercompositedownnotransform.json] composite order down without new column transformation", checkQuery);
+		it("[valid/minsumavgcountsimplesort.json] Min Sum Avg Count Transformation with 1 col sort", checkQuery);
+		it("[valid/minsumavgcountmultisort.json] Min Sum Avg Count Transformation with multi col sort", checkQuery);
+		it("[invalid/invalidcustomcolnames.json] selected custom colnames doesn't exist post transformation", checkQuery);
+		it("[invalid/invalidordernotincolumn.json] order not in column", checkQuery);
 	});
 });
