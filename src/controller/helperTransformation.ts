@@ -1,7 +1,9 @@
-import { InsightError } from "./IInsightFacade";
+import { InsightError, InsightResult } from "./IInsightFacade";
 import { Room, Section } from "./helperClass";
 import { HelperFunction } from "./helperFunction";
 import { HelperSort } from "./helperSort";
+
+//type SR = Section | Room;
 
 export class HelperTransformation {
 	private hf = new HelperFunction();
@@ -20,7 +22,7 @@ export class HelperTransformation {
 		// group by instructor and title, we will have ["Jean", "310"], ["Casey", "310"],
 		// ["Kelly", "210"], and so on.
 		// the Section[] will contain all the filtered sections that qualifies
-		const groupedData = new Map<(string | number)[], Section[] | Room[]>();
+		const groupedData = new Map<string, Section[] | Room[]>();
 
 		sections.forEach((section) => {
 			// group is ["instructor", "title"]
@@ -37,7 +39,7 @@ export class HelperTransformation {
 
 			//console.log(dataList);
 
-			const tryAccessMapElement = groupedData.get(dataList);
+			const tryAccessMapElement = groupedData.get(JSON.stringify(dataList));
 			//console.log(tryAccessMapElement);
 			if (tryAccessMapElement) {
 				// dataList found, just need to add the section
@@ -45,7 +47,7 @@ export class HelperTransformation {
 				tryAccessMapElement.push(section as any);
 			} else {
 				// undefined since key does not exist
-				groupedData.set(dataList, [section as any]);
+				groupedData.set(JSON.stringify(dataList), [section as any]);
 			}
 		});
 		// Notice that 1 section can only be at one group, so this algorithm is possible
@@ -59,7 +61,7 @@ export class HelperTransformation {
 		return result;
 	}
 
-	private handleApply(apply: any[], groupedData: Map<(string | number)[], Section[]>, group: string): any[] {
+	private handleApply(apply: any[], groupedData: Map<string, Section[]>, group: string): any[] {
 		// one result will be {groupKey1: Value1 , groupKey2: Value2, new_col1: agg1, new_col2: agg2, ...}
 		const results: any[] = [];
 
@@ -72,8 +74,8 @@ export class HelperTransformation {
 			//console.log(groupKey);
 
 			// Add group keys to result, they will be the new_col s
-			groupKey.forEach((key) => {
-				applyResult[group[0]] = key;
+			(JSON.parse(groupKey) as (string | number)[]).forEach((key, index) => {
+				applyResult[group[index]] = key; // Match group key to its corresponding group name
 			});
 
 			// Apply each rule to get the result in form of compacted fields,
@@ -108,5 +110,32 @@ export class HelperTransformation {
 			default:
 				throw new InsightError(`Invalid APPLYTOKEN: ${operation}`);
 		}
+	}
+
+	public async handleTransOptions(options: any, filtered: any[], queryId: string): Promise<InsightResult[]> {
+		const { COLUMNS, ORDER } = options;
+
+		// Assume filtered is now transformed data if TRANSFORMATIONS applied
+		const results: InsightResult[] = filtered.map((item) => {
+			const result: any = {};
+
+			// Handle each column in the result
+			COLUMNS.forEach((column: string) => {
+				if (Object.prototype.hasOwnProperty.call(item, column)) {
+					result[column] = item[column];
+				} else {
+					throw new InsightError(`Column ${column} not found in transformed dataset.`);
+				}
+			});
+
+			return result;
+		});
+
+		// Apply ORDER if it exists
+		if (ORDER) {
+			this.hs.sortResults(results, ORDER, queryId, COLUMNS);
+		}
+
+		return results;
 	}
 }

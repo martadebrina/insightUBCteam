@@ -34,7 +34,7 @@ export class HelperFunction {
 		throw new InsightError();
 	}
 
-	public getParamString(param: String, s: Section | Room): string {
+	public getParamString(param: string, s: Section | Room): string {
 		if (s instanceof Section) {
 			if (param === "uuid") {
 				return s.uuid;
@@ -52,36 +52,44 @@ export class HelperFunction {
 				return s.dept;
 			}
 		} else if (s instanceof Room) {
-			if (param === "fullname") {
-				return s.fullname;
-			}
-			if (param === "shortname") {
-				return s.shortname;
-			}
-			if (param === "number") {
-				return s.number;
-			}
-			if (param === "name") {
-				return s.name;
-			}
-			if (param === "address") {
-				return s.address;
-			}
-			if (param === "type") {
-				return s.type;
-			}
-			if (param === "furniture") {
-				return s.furniture;
-			}
-			if (param === "href") {
-				return s.href;
+			const result = this.getParamStringRoom(param, s);
+			if (result !== "error") {
+				return result;
 			}
 		}
-
 		throw new InsightError("no valid param");
 	}
 
-	public getParamAll(param: String, s: Section | Room): number | string {
+	private getParamStringRoom(param: string, s: Room): string {
+		if (param === "fullname") {
+			return s.fullname;
+		}
+		if (param === "shortname") {
+			return s.shortname;
+		}
+		if (param === "number") {
+			return s.number;
+		}
+		if (param === "name") {
+			return s.name;
+		}
+		if (param === "address") {
+			return s.address;
+		}
+		if (param === "type") {
+			return s.type;
+		}
+		if (param === "furniture") {
+			return s.furniture;
+		}
+		if (param === "href") {
+			return s.href;
+		} else {
+			return "error";
+		}
+	}
+
+	public getParamAll(param: string, s: Section | Room): number | string {
 		try {
 			return this.getParamString(param, s);
 		} catch {

@@ -147,7 +147,7 @@ export default class InsightFacade implements IInsightFacade {
 		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		if (typeof query !== "object" || query === null) {
-			throw new InsightError();
+			throw new InsightError("Invalid Query: Starting");
 		}
 
 		const { WHERE, OPTIONS, TRANSFORMATIONS } = query as any;
@@ -166,11 +166,14 @@ export default class InsightFacade implements IInsightFacade {
 		}
 
 		// handle TRANSFORMATIONS when possible, then handle Options
+		let result;
 		if (TRANSFORMATIONS) {
+			// changed filtered type from (Section | Room)[] into Object[]
 			filtered = await this.ht.handleTransformation(TRANSFORMATIONS, filtered);
+			result = await this.ht.handleTransOptions(OPTIONS, filtered, queryId);
+		} else {
+			result = await this.handleOptions(OPTIONS, filtered, queryId);
 		}
-		const result = await this.handleOptions(OPTIONS, filtered, queryId);
-
 		const limit = 5000;
 
 		if (result.length > limit) {
@@ -233,41 +236,29 @@ export default class InsightFacade implements IInsightFacade {
 	// 	return results;
 	// }
 
-	private async handleOptions(options: any, filtered: any[], queryId: string): Promise<InsightResult[]> {
-		const { COLUMNS, ORDER } = options;
+	private async handleOptions(options: any, filtered: (Section | Room)[], queryId: string): Promise<InsightResult[]> {
+		const columns = options.COLUMNS;
+		const order = options.ORDER;
 		const columnParam: string[] = [];
 
-		//console.log(COLUMNS);
-
-		// Map filtered sections or transformed data to the required columns
-		const results: InsightResult[] = filtered.map((item) => {
+		// map filtered sections to the required columns
+		const results: InsightResult[] = filtered.map((inside) => {
 			const result: any = {};
-
-			// Handle each column in the result
-			COLUMNS.forEach((col: string) => {
+			columns.forEach((col: string) => {
 				const [datasetId, field] = col.split("_");
-
-				// Validate datasetId if it's from the query
 				if (datasetId !== queryId) {
-					throw new InsightError("Invalid dataset");
+					throw new InsightError("invalid dataset");
 				}
 				columnParam.push(field);
-				//console.log(columnParam);
-
-				// Use this.hf.getParamAll for the original sections or direct access for transformed data
-				result[col] = this.hf.getParamAll(field, item); // Assume item is a Section or transformed object
-				//console.log("hi");
+				result[col] = this.hf.getParamAll(field, inside);
 			});
-
 			return result;
 		});
 
-		// Apply ORDER if it exists
-		if (ORDER) {
-			this.hs.sortResults(results, ORDER, queryId, columnParam);
+		// If ORDER exists, sort the results
+		if (order) {
+			this.hs.sortResults(results, order, queryId, columnParam);
 		}
-
-		//console.log(results);
 
 		return results;
 	}
