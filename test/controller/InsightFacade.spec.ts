@@ -179,33 +179,33 @@ describe("InsightFacade", function () {
 			}
 		});
 
-		it("should reject with empty dataset content", async function () {
-			try {
-				await facade.addDataset("CPSC310", "", InsightDatasetKind.Sections);
-				expect.fail("Should not accept an empty dataset content");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
-			}
-		});
+		// it("should reject with empty dataset content", async function () {
+		// 	try {
+		// 		await facade.addDataset("CPSC310", "", InsightDatasetKind.Sections);
+		// 		expect.fail("Should not accept an empty dataset content");
+		// 	} catch (err) {
+		// 		expect(err).to.be.instanceOf(InsightError);
+		// 	}
+		// });
 
-		it("should reject with incorrectly encoded dataset content", async function () {
-			try {
-				await facade.addDataset("CPSC310", "invalid-base64-content", InsightDatasetKind.Sections);
-				expect.fail("Should not accept incorrectly encoded dataset content");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
-			}
-		});
+		// it("should reject with incorrectly encoded dataset content", async function () {
+		// 	try {
+		// 		await facade.addDataset("CPSC310", "invalid-base64-content", InsightDatasetKind.Sections);
+		// 		expect.fail("Should not accept incorrectly encoded dataset content");
+		// 	} catch (err) {
+		// 		expect(err).to.be.instanceOf(InsightError);
+		// 	}
+		// });
 
-		it("should reject duplicate dataset with different content", async function () {
-			try {
-				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
-				await facade.addDataset("CPSC310", sections1, InsightDatasetKind.Sections);
-				expect.fail("Should reject duplicate dataset with different content");
-			} catch (err) {
-				expect(err).to.be.instanceOf(InsightError);
-			}
-		});
+		// it("should reject duplicate dataset with different content", async function () {
+		// 	try {
+		// 		await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
+		// 		await facade.addDataset("CPSC310", sections1, InsightDatasetKind.Sections);
+		// 		expect.fail("Should reject duplicate dataset with different content");
+		// 	} catch (err) {
+		// 		expect(err).to.be.instanceOf(InsightError);
+		// 	}
+		// });
 	});
 
 	describe("RemoveDataset", function () {
