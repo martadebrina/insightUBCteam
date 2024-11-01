@@ -111,6 +111,20 @@ export class HelperFunction {
 		return id;
 	}
 
+	public async getQueryIdT(TRANSFORMATIONS: any): Promise<string> {
+		// TODO: return dataset id from first element of column
+		// check for no column and empty column
+		const transform = TRANSFORMATIONS.GROUP as any;
+		if (!transform) {
+			throw new InsightError("no columns");
+		}
+		if (transform.length === 0) {
+			throw new InsightError("column is empty");
+		}
+		const id = transform[0].split("_")[0];
+		return id;
+	}
+
 	public isValidId(id: string): boolean {
 		const trimmedId = id.trim();
 		return trimmedId.length > 0 && !trimmedId.includes("_") && !trimmedId.includes(" ");

@@ -1,0 +1,65 @@
+{
+	"title": "Min Sum Avg Count Transformation with 1 col sort",
+	"input": {
+		"WHERE": {
+		  "AND": [
+			{
+			  "IS": {
+				"rooms_furniture": "*Tables*"
+			  }
+			},
+			{
+			  "GT": {
+				"rooms_seats": 100
+			  }
+			}
+		  ]
+		},
+		"OPTIONS": {
+		  "COLUMNS": [
+			"minSeats",
+			"totalSeats",
+			"expectedSeats",
+			"numDifferentLayouts"
+		  ],
+		  "ORDER": {
+			"dir": "DOWN",
+			"keys": [
+			  "minSeats",
+			  "totalSeats",
+			  "expectedSeats",
+			  "numDifferentLayouts"
+			]
+		  }
+		},
+		"TRANSFORMATIONS": {
+		  "GROUP": [
+			"rooms_shortname"
+		  ],
+		  "APPLY": [
+			{
+			  "minSeats": {
+				"MIN": "rooms_lat"
+			  }
+			},
+			{
+			  "totalSeats": {
+				"SUM": "rooms_lon"
+			  }
+			},
+			{
+			  "expectedSeats": {
+				"AVG": "rooms_seats"
+			  }
+			},
+			{
+			  "numDifferentLayouts": {
+				"COUNT": "rooms_seats"
+			  }
+			}
+		  ]
+		}
+	  },
+	"errorExpected": false,
+	"expected": [{"minSeats":49.2683,"totalSeats":-369.75,"expectedSeats":299,"numDifferentLayouts":1},{"minSeats":49.26826,"totalSeats":-246.51,"expectedSeats":108,"numDifferentLayouts":1},{"minSeats":49.26766,"totalSeats":-246.5,"expectedSeats":133,"numDifferentLayouts":2},{"minSeats":49.2661,"totalSeats":-123.25,"expectedSeats":375,"numDifferentLayouts":1},{"minSeats":49.26545,"totalSeats":-246.51,"expectedSeats":194,"numDifferentLayouts":2},{"minSeats":49.26541,"totalSeats":-123.25,"expectedSeats":160,"numDifferentLayouts":1},{"minSeats":49.26486,"totalSeats":-123.25,"expectedSeats":260,"numDifferentLayouts":1},{"minSeats":49.26478,"totalSeats":-369.74,"expectedSeats":120,"numDifferentLayouts":1},{"minSeats":49.26293,"totalSeats":-493.02,"expectedSeats":188.75,"numDifferentLayouts":3},{"minSeats":49.26236,"totalSeats":-369.73,"expectedSeats":275,"numDifferentLayouts":2},{"minSeats":49.26229,"totalSeats":-246.49,"expectedSeats":201.5,"numDifferentLayouts":2},{"minSeats":49.26228,"totalSeats":-123.25,"expectedSeats":200,"numDifferentLayouts":1},{"minSeats":49.26176,"totalSeats":-246.5,"expectedSeats":129.5,"numDifferentLayouts":2},{"minSeats":49.26125,"totalSeats":-246.5,"expectedSeats":140,"numDifferentLayouts":2},{"minSeats":49.26047,"totalSeats":-123.24,"expectedSeats":442,"numDifferentLayouts":1}]
+}
