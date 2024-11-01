@@ -8,10 +8,11 @@ export class HelperSort {
 			this.advancedSort(order, queryId, columnParam, results);
 		}
 	}
-
 	// when order is just a single key, whether it's mkey skey or the customkey (no _)
 	private basicSort(order: string, queryId: string, columnParam: string[], results: InsightResult[]): void {
 		this.validateOrderColumn(order, queryId, columnParam);
+
+		//console.log(columnParam);
 
 		results.sort((a, b) => {
 			const aValue = a[order];
@@ -37,6 +38,7 @@ export class HelperSort {
 		if (!direction || !sortKeys || sortKeys.length === 0) {
 			throw new InsightError("Invalid query format: order syntax wrong");
 		}
+
 		sortKeys.forEach((key: string) => this.validateOrderColumn(key, queryId, columnParam));
 
 		if (direction === "UP") {
@@ -50,11 +52,11 @@ export class HelperSort {
 
 	private validateOrderColumn(order: string, queryId: string, columnParam: string[]): void {
 		if (order.includes("_")) {
-			const [dataset, orderParam] = order.split("_");
+			const dataset = order.split("_")[0];
 			if (dataset !== queryId) {
 				throw new InsightError("Invalid dataset");
 			}
-			if (!columnParam.includes(orderParam)) {
+			if (!columnParam.includes(order)) {
 				throw new InsightError("Invalid column: ${orderParam}");
 			}
 		} else {

@@ -176,8 +176,6 @@ export class HelperTransformation {
 
 	public async handleTransOptions(options: any, filtered: any[], queryId: string): Promise<InsightResult[]> {
 		const { COLUMNS, ORDER } = options;
-
-		// Assume filtered is now transformed data if TRANSFORMATIONS applied
 		const results: InsightResult[] = filtered.map((item) => {
 			const result: any = {};
 
@@ -190,6 +188,7 @@ export class HelperTransformation {
 				}
 			});
 
+			//console.log(result);
 			return result;
 		});
 
@@ -197,7 +196,6 @@ export class HelperTransformation {
 		if (ORDER) {
 			this.hs.sortResults(results, ORDER, queryId, COLUMNS);
 		}
-
 		return results;
 	}
 }
