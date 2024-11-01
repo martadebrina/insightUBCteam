@@ -1,0 +1,28 @@
+{
+	"title": "Extend to room dataset (old implementation)",
+	"input": {
+        "WHERE": {
+          "AND": [
+            {
+              "IS": {
+                "rooms_furniture": "*Tables*"
+              }
+            },
+            {
+              "GT": {
+                "rooms_seats": 300
+              }
+            }
+          ]
+        },
+        "OPTIONS": {
+          "COLUMNS": [
+            "rooms_shortname",
+            "rooms_seats",
+            "rooms_furniture"
+          ]
+        }
+      },
+	"errorExpected": false,
+	"expected": [{"rooms_shortname":"HEBB","rooms_seats":375,"rooms_furniture":"Classroom-Fixed Tables/Fixed Chairs"},{"rooms_shortname":"LSC","rooms_seats":350,"rooms_furniture":"Classroom-Fixed Tables/Movable Chairs"},{"rooms_shortname":"LSC","rooms_seats":350,"rooms_furniture":"Classroom-Fixed Tables/Movable Chairs"},{"rooms_shortname":"OSBO","rooms_seats":442,"rooms_furniture":"Classroom-Movable Tables & Chairs"}]
+}

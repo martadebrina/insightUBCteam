@@ -1,47 +1,95 @@
 import { InsightError } from "./IInsightFacade";
-import { Section } from "./helperClass";
+import { Section, Room } from "./helperClass";
 
 export class HelperFunction {
-	public getParamNum(param: String, s: Section): number {
-		if (param === "year") {
-			return s.year;
+	public getParamNum(param: String, s: Section | Room): number {
+		if (s instanceof Section) {
+			if (param === "year") {
+				return s.year;
+			}
+			if (param === "avg") {
+				return s.avg;
+			}
+			if (param === "pass") {
+				return s.pass;
+			}
+			if (param === "fail") {
+				return s.fail;
+			}
+			if (param === "audit") {
+				return s.audit;
+			}
+		} else if (s instanceof Room) {
+			if (param === "lat") {
+				return s.lat;
+			}
+			if (param === "lon") {
+				return s.lon;
+			}
+			if (param === "seats") {
+				return s.seats;
+			}
 		}
-		if (param === "avg") {
-			return s.avg;
-		}
-		if (param === "pass") {
-			return s.pass;
-		}
-		if (param === "fail") {
-			return s.fail;
-		}
-		if (param === "audit") {
-			return s.audit;
-		}
+
 		throw new InsightError();
 	}
 
-	public getParamString(param: String, s: Section): string {
-		if (param === "uuid") {
-			return s.uuid;
+	public getParamString(param: string, s: Section | Room): string {
+		if (s instanceof Section) {
+			if (param === "uuid") {
+				return s.uuid;
+			}
+			if (param === "id") {
+				return s.id;
+			}
+			if (param === "title") {
+				return s.title;
+			}
+			if (param === "instructor") {
+				return s.instructor;
+			}
+			if (param === "dept") {
+				return s.dept;
+			}
+		} else if (s instanceof Room) {
+			const result = this.getParamStringRoom(param, s);
+			if (result !== "error") {
+				return result;
+			}
 		}
-		if (param === "id") {
-			return s.id;
-		}
-		if (param === "title") {
-			return s.title;
-		}
-		if (param === "instructor") {
-			return s.instructor;
-		}
-		if (param === "dept") {
-			return s.dept;
-		}
-
 		throw new InsightError("no valid param");
 	}
 
-	public getParamAll(param: String, s: Section): number | string {
+	private getParamStringRoom(param: string, s: Room): string {
+		if (param === "fullname") {
+			return s.fullname;
+		}
+		if (param === "shortname") {
+			return s.shortname;
+		}
+		if (param === "number") {
+			return s.number;
+		}
+		if (param === "name") {
+			return s.name;
+		}
+		if (param === "address") {
+			return s.address;
+		}
+		if (param === "type") {
+			return s.type;
+		}
+		if (param === "furniture") {
+			return s.furniture;
+		}
+		if (param === "href") {
+			return s.href;
+		} else {
+			return "error";
+		}
+	}
+
+	public getParamAll(param: string, s: Section | Room): number | string {
 		try {
 			return this.getParamString(param, s);
 		} catch {
@@ -94,7 +142,11 @@ export class HelperFunction {
 		}
 	}
 
-	public async handleGreaterThan(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	public async handleGreaterThan(
+		where: any,
+		sections: Section[] | Room[],
+		queryId: string
+	): Promise<Section[] | Room[]> {
 		const [key, value]: [string, unknown] = Object.entries(where.GT)[0];
 		const param = key.split("_")[1];
 		const dataset = key.split("_")[0];
@@ -109,12 +161,16 @@ export class HelperFunction {
 			throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
 		}
 
-		return sections.filter((s) => {
-			return this.getParamNum(param, s) > value;
-		});
+		if (this.isSectionArray(sections)) {
+			return sections.filter((s: Section) => this.getParamNum(param, s) > value) as Section[];
+		} else if (this.isRoomArray(sections)) {
+			return sections.filter((s: Room) => this.getParamNum(param, s) > value) as Room[];
+		}
+
+		throw new InsightError("Unexpected type in sections array");
 	}
 
-	public async handleLessThan(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	public async handleLessThan(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		const [key, value]: [string, unknown] = Object.entries(where.LT)[0];
 		const param = key.split("_")[1];
 		const dataset = key.split("_")[0];
@@ -130,12 +186,16 @@ export class HelperFunction {
 			throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
 		}
 
-		return sections.filter((s) => {
-			return this.getParamNum(param, s) < value;
-		});
+		if (this.isSectionArray(sections)) {
+			return sections.filter((s: Section) => this.getParamNum(param, s) < value) as Section[];
+		} else if (this.isRoomArray(sections)) {
+			return sections.filter((s: Room) => this.getParamNum(param, s) < value) as Room[];
+		}
+
+		throw new InsightError("Unexpected type in sections array");
 	}
 
-	public async handleEqual(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	public async handleEqual(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		const [key, value]: [string, unknown] = Object.entries(where.EQ)[0];
 		const param = key.split("_")[1];
 		const dataset = key.split("_")[0];
@@ -150,8 +210,22 @@ export class HelperFunction {
 		if (isNaN(value)) {
 			throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
 		}
-		return sections.filter((s) => {
-			return this.getParamNum(param, s) === value;
-		});
+		if (this.isSectionArray(sections)) {
+			return sections.filter((s: Section) => this.getParamNum(param, s) === value) as Section[];
+		} else if (this.isRoomArray(sections)) {
+			return sections.filter((s: Room) => this.getParamNum(param, s) === value) as Room[];
+		}
+
+		throw new InsightError("Unexpected type in sections array");
+	}
+
+	// Type guard for Section[]
+	public isSectionArray(arr: any[]): arr is Section[] {
+		return arr.every((item) => item instanceof Section);
+	}
+
+	// Type guard for Room[]
+	public isRoomArray(arr: any[]): arr is Room[] {
+		return arr.every((item) => item instanceof Room);
 	}
 }

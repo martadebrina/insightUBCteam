@@ -147,25 +147,33 @@ export default class InsightFacade implements IInsightFacade {
 		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
 
 		if (typeof query !== "object" || query === null) {
-			throw new InsightError();
+			throw new InsightError("Invalid Query: Starting");
 		}
 
 		const { WHERE, OPTIONS, TRANSFORMATIONS } = query as any;
 
 		const { foundDataset, queryId } = await this.validateQuery(WHERE, OPTIONS, query);
 
-		let filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
+		let filtered: Section[] | Room[] = [];
+		if (foundDataset.kind === InsightDatasetKind.Sections) {
+			filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
+		} else if (foundDataset.kind === InsightDatasetKind.Rooms) {
+			filtered = await this.hw.handleWhere(WHERE, foundDataset.rooms, queryId);
+		}
 
 		if (filtered.length === 0) {
 			return [];
 		}
 
 		// handle TRANSFORMATIONS when possible, then handle Options
+		let result;
 		if (TRANSFORMATIONS) {
+			// changed filtered type from (Section | Room)[] into Object[]
 			filtered = await this.ht.handleTransformation(TRANSFORMATIONS, filtered);
+			result = await this.ht.handleTransOptions(OPTIONS, filtered, queryId);
+		} else {
+			result = await this.handleOptions(OPTIONS, filtered, queryId);
 		}
-		const result = await this.handleOptions(OPTIONS, filtered, queryId);
-
 		const limit = 5000;
 
 		if (result.length > limit) {
@@ -228,34 +236,28 @@ export default class InsightFacade implements IInsightFacade {
 	// 	return results;
 	// }
 
-	private async handleOptions(options: any, filtered: any[], queryId: string): Promise<InsightResult[]> {
-		const { COLUMNS, ORDER } = options;
+	private async handleOptions(options: any, filtered: (Section | Room)[], queryId: string): Promise<InsightResult[]> {
+		const columns = options.COLUMNS;
+		const order = options.ORDER;
 		const columnParam: string[] = [];
 
-		// Map filtered sections or transformed data to the required columns
-		const results: InsightResult[] = filtered.map((item) => {
+		// map filtered sections to the required columns
+		const results: InsightResult[] = filtered.map((inside) => {
 			const result: any = {};
-
-			// Handle each column in the result
-			COLUMNS.forEach((col: string) => {
+			columns.forEach((col: string) => {
 				const [datasetId, field] = col.split("_");
-
-				// Validate datasetId if it's from the query
 				if (datasetId !== queryId) {
-					throw new InsightError("Invalid dataset");
+					throw new InsightError("invalid dataset");
 				}
 				columnParam.push(field);
-
-				// Use this.hf.getParamAll for the original sections or direct access for transformed data
-				result[col] = this.hf.getParamAll(field, item); // Assume item is a Section or transformed object
+				result[col] = this.hf.getParamAll(field, inside);
 			});
-
 			return result;
 		});
 
-		// Apply ORDER if it exists
-		if (ORDER) {
-			this.hs.sortResults(results, ORDER, queryId, columnParam);
+		// If ORDER exists, sort the results
+		if (order) {
+			this.hs.sortResults(results, order, queryId, columnParam);
 		}
 
 		return results;

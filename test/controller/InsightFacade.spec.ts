@@ -412,6 +412,7 @@ describe("InsightFacade", function () {
 			// Will *fail* if there is a problem reading ANY dataset.
 			const loadDatasetPromises: Promise<string[]>[] = [
 				facade.addDataset("sections", sections, InsightDatasetKind.Sections),
+				facade.addDataset("rooms", rooms, InsightDatasetKind.Rooms),
 			];
 			try {
 				await Promise.all(loadDatasetPromises);
@@ -475,5 +476,10 @@ describe("InsightFacade", function () {
 		it("[invalid/invalidmkey.json] wrong m key", checkQuery);
 		it("[invalid/invalidskey.json] wrong s key", checkQuery);
 		it("[valid/matchingwildcards.json] matching wildcards", checkQuery);
+		it("[valid/successfulcomplete.json] normal example from specification", checkQuery);
+		it("[valid/successfulwithoutorder.json] normal example from specification without order", checkQuery);
+		it("[valid/extend.json] extend old performquery for rooms", checkQuery);
+		it("[valid/ordercompositenotransform.json] composite order up without new column transformation", checkQuery);
+		it("[valid/ordercompositedownnotransform.json] composite order down without new column transformation", checkQuery);
 	});
 });

@@ -1,11 +1,11 @@
 import { InsightError } from "./IInsightFacade";
-import { Section } from "./helperClass";
+import { Section, Room } from "./helperClass";
 import { HelperFunction } from "./helperFunction";
 
 export class HelperWhere {
 	private hf = new HelperFunction();
 
-	public async handleWhere(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	public async handleWhere(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		// base case
 		if (Object.keys(where).length === 0) {
 			return sections;
@@ -27,7 +27,7 @@ export class HelperWhere {
 		throw new InsightError("invalid ebnf");
 	}
 
-	private async handleMComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	private async handleMComp(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		// now we have list of sections with ID that we want
 		if (where.GT) {
 			return await this.hf.handleGreaterThan(where, sections, queryId);
@@ -42,7 +42,7 @@ export class HelperWhere {
 		throw new InsightError("no m comp");
 	}
 
-	private async handleSComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	private async handleSComp(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		if (Object.keys(where.IS).length === 0) {
 			throw new InsightError("Invalid Query Syntax for IS");
 		}
@@ -57,28 +57,54 @@ export class HelperWhere {
 		if (typeof value !== "string") {
 			throw new InsightError("invalid skey");
 		}
-		const a = sections.filter((s) => {
-			const valueType = this.hf.getValueType(value);
-			const compareValue = this.hf.getParamString(param, s);
-			if (valueType === "startend") {
-				const newString = value.slice(1, -1);
-				return compareValue.includes(newString);
-			} else if (valueType === "start") {
-				const newString = value.slice(1);
-				// console.log(newString);
-				return compareValue.endsWith(newString);
-			} else if (valueType === "end") {
-				const newString = value.slice(0, -1);
-				return compareValue.startsWith(newString);
-			} else {
-				return compareValue === value;
-			}
-		});
+		let a: Section[] | Room[] = [];
+
+		if (this.hf.isSectionArray(sections)) {
+			a = sections.filter((s: Section) => {
+				const valueType = this.hf.getValueType(value);
+				const compareValue = this.hf.getParamString(param, s);
+				if (valueType === "startend") {
+					const newString = value.slice(1, -1);
+					return compareValue.includes(newString);
+				} else if (valueType === "start") {
+					const newString = value.slice(1);
+					// console.log(newString);
+					return compareValue.endsWith(newString);
+				} else if (valueType === "end") {
+					const newString = value.slice(0, -1);
+					return compareValue.startsWith(newString);
+				} else {
+					return compareValue === value;
+				}
+			}) as Section[];
+		} else if (this.hf.isRoomArray(sections)) {
+			a = sections.filter((s: Room) => {
+				const valueType = this.hf.getValueType(value);
+				const compareValue = this.hf.getParamString(param, s);
+				if (valueType === "startend") {
+					const newString = value.slice(1, -1);
+					return compareValue.includes(newString);
+				} else if (valueType === "start") {
+					const newString = value.slice(1);
+					// console.log(newString);
+					return compareValue.endsWith(newString);
+				} else if (valueType === "end") {
+					const newString = value.slice(0, -1);
+					return compareValue.startsWith(newString);
+				} else {
+					return compareValue === value;
+				}
+			}) as Room[];
+		}
 
 		return a;
 	}
 
-	private async handleLogicComp(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	private async handleLogicComp(
+		where: any,
+		sections: Section[] | Room[],
+		queryId: string
+	): Promise<Section[] | Room[]> {
 		// where.LOGIC is an array, e.g. ( { AND: [ { GT: [Object] }, { IS: [Object] } ] } )
 		// therefore filteredSections in handleOr and handleAnd stores the result of each recursion of each branches inside the where.LOGIC
 
@@ -93,7 +119,7 @@ export class HelperWhere {
 		throw new InsightError(`Invalid logical operator: ${where[0]}`);
 	}
 
-	private async handleOr(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	private async handleOr(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		if (where.OR.length === 0) {
 			throw new InsightError("Invalid Query Syntax");
 		}
@@ -102,22 +128,17 @@ export class HelperWhere {
 
 		const filteredSections = await Promise.all(orPromises);
 
-		// check whether the section is found in one of the filteredSections members
-		function sectionChecker(s: Section): boolean {
-			for (const x of filteredSections) {
-				if (x.includes(s)) {
-					return true;
-				}
-			}
-			return false;
-		}
+		const flattenedSections = filteredSections.flat();
 
-		return sections.filter((s: Section) => {
-			return sectionChecker(s);
-		});
+		if (this.hf.isSectionArray(flattenedSections) && this.hf.isSectionArray(sections)) {
+			return sections.filter((s: Section) => flattenedSections.includes(s));
+		} else if (this.hf.isRoomArray(flattenedSections) && this.hf.isRoomArray(sections)) {
+			return sections.filter((s: Room) => flattenedSections.includes(s));
+		}
+		throw new InsightError("invalid kind");
 	}
 
-	private async handleAnd(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	private async handleAnd(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		if (where.AND.length === 0) {
 			throw new InsightError("Invalid Query Syntax");
 		}
@@ -126,13 +147,29 @@ export class HelperWhere {
 
 		const filteredSections = await Promise.all(andPromises);
 
-		return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section)));
+		if (this.hf.isSectionArray(sections)) {
+			return sections.filter((section) =>
+				filteredSections.every((filtered) => filtered.includes(section))
+			) as Section[];
+		} else if (this.hf.isRoomArray(sections)) {
+			return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section))) as Room[];
+		}
+
+		throw new InsightError("no valid kind");
+		//return sections.filter((section) => filteredSections.every((filtered) => filtered.includes(section))) as Section[] | Room[];
 	}
 
-	private async handleNegation(where: any, sections: Section[], queryId: string): Promise<Section[]> {
+	private async handleNegation(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
 		const filteredSections = await this.handleWhere(where.NOT, sections, queryId);
-		return sections.filter((s: Section) => {
-			return !filteredSections.includes(s);
-		});
+		if (this.hf.isSectionArray(filteredSections) && this.hf.isSectionArray(sections)) {
+			return sections.filter((s: Section) => {
+				return !filteredSections.includes(s);
+			}) as Section[];
+		} else if (this.hf.isRoomArray(filteredSections) && this.hf.isRoomArray(sections)) {
+			return sections.filter((s: Room) => {
+				return !filteredSections.includes(s);
+			}) as Room[];
+		}
+		return [];
 	}
 }
