@@ -178,6 +178,34 @@ describe("InsightFacade", function () {
 				expect.fail("Should have added the room dataset successfully");
 			}
 		});
+
+		it("should reject with empty dataset content", async function () {
+			try {
+				await facade.addDataset("CPSC310", "", InsightDatasetKind.Sections);
+				expect.fail("Should not accept an empty dataset content");
+			} catch (err) {
+				expect(err).to.be.instanceOf(InsightError);
+			}
+		});
+
+		it("should reject with incorrectly encoded dataset content", async function () {
+			try {
+				await facade.addDataset("CPSC310", "invalid-base64-content", InsightDatasetKind.Sections);
+				expect.fail("Should not accept incorrectly encoded dataset content");
+			} catch (err) {
+				expect(err).to.be.instanceOf(InsightError);
+			}
+		});
+
+		it("should reject duplicate dataset with different content", async function () {
+			try {
+				await facade.addDataset("CPSC310", sections, InsightDatasetKind.Sections);
+				await facade.addDataset("CPSC310", sections1, InsightDatasetKind.Sections);
+				expect.fail("Should reject duplicate dataset with different content");
+			} catch (err) {
+				expect(err).to.be.instanceOf(InsightError);
+			}
+		});
 	});
 
 	describe("RemoveDataset", function () {
@@ -486,5 +514,8 @@ describe("InsightFacade", function () {
 		it("[invalid/invalidcustomcolnames.json] selected custom colnames doesn't exist post transformation", checkQuery);
 		it("[invalid/invalidordernotincolumn.json] order not in column", checkQuery);
 		it("[valid/idtransform.json] id from transformation query", checkQuery);
+		it("[valid/multkeyscolumn.json] multiple keys column", checkQuery);
+		it("[valid/multapply.json] multiple apply", checkQuery);
+		it("[valid/roomwildcards.json] Partial Matches with Wildcards", checkQuery);
 	});
 });

@@ -171,13 +171,14 @@ export default class InsightFacade implements IInsightFacade {
 		} else {
 			result = await this.handleOptions(OPTIONS, filtered, queryId);
 		}
+		//console.log(result);
 		const limit = 5000;
 
 		if (result.length > limit) {
 			throw new ResultTooLargeError("result too large");
 		}
 
-		// console.log(result);
+		//console.log(result);
 
 		return result;
 	}
@@ -259,7 +260,7 @@ export default class InsightFacade implements IInsightFacade {
 
 		// If ORDER exists, sort the results
 		if (order) {
-			this.hs.sortResults(results, order, queryId, columnParam);
+			this.hs.sortResults(results, order, queryId, columns);
 		}
 
 		return results;

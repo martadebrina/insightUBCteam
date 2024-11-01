@@ -1,0 +1,34 @@
+{
+	"title": "Partial Matches with Wildcards",
+	"input": {
+		"WHERE": {
+		  "AND": [
+			{
+			  "IS": {
+				"rooms_furniture": "*Table*"
+			  }
+			},
+			{
+			  "IS": {
+				"rooms_shortname": "*A*"
+			  }
+			}
+		  ]
+		},
+		"OPTIONS": {
+		  "COLUMNS": [
+			"rooms_shortname",
+			"rooms_furniture",
+			"rooms_seats"
+		  ],
+		  "ORDER": {
+			"dir": "DOWN",
+			"keys": [
+			  "rooms_seats"
+			]
+		  }
+		}
+	  },
+	"errorExpected": false,
+	"expected": [{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":260},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Fixed Tablets","rooms_seats":224},{"rooms_shortname":"AERL","rooms_furniture":"Classroom-Fixed Tablets","rooms_seats":144},{"rooms_shortname":"MATX","rooms_furniture":"Classroom-Fixed Tablets","rooms_seats":106},{"rooms_shortname":"IONA","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":100},{"rooms_shortname":"ALRD","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":94},{"rooms_shortname":"LASR","rooms_furniture":"Classroom-Fixed Tablets","rooms_seats":94},{"rooms_shortname":"ANSO","rooms_furniture":"Classroom-Moveable Tablets","rooms_seats":90},{"rooms_shortname":"LASR","rooms_furniture":"Classroom-Fixed Tables/Fixed Chairs","rooms_seats":80},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":80},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":70},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":70},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":68},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":68},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":68},{"rooms_shortname":"LASR","rooms_furniture":"Classroom-Fixed Tablets","rooms_seats":60},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":60},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":60},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":60},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":58},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":54},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":54},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":54},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":54},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":53},{"rooms_shortname":"LASR","rooms_furniture":"Classroom-Movable Tablets","rooms_seats":51},{"rooms_shortname":"ALRD","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":50},{"rooms_shortname":"IONA","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":50},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":48},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":48},{"rooms_shortname":"ALRD","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":44},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":44},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":44},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":41},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":41},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Fixed Tables/Movable Chairs","rooms_seats":41},{"rooms_shortname":"ANSO","rooms_furniture":"Classroom-Moveable Tables & Chairs","rooms_seats":37},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":37},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":35},{"rooms_shortname":"ANSO","rooms_furniture":"Classroom-Moveable Tables & Chairs","rooms_seats":33},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":32},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":32},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Movable Tablets","rooms_seats":30},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Movable Tablets","rooms_seats":30},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Movable Tablets","rooms_seats":30},{"rooms_shortname":"ANSO","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":26},{"rooms_shortname":"MATH","rooms_furniture":"Classroom-Movable Tablets","rooms_seats":25},{"rooms_shortname":"AUDX","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":21},{"rooms_shortname":"ALRD","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":20},{"rooms_shortname":"ALRD","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":20},{"rooms_shortname":"AUDX","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":20},{"rooms_shortname":"LASR","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":20},{"rooms_shortname":"LASR","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":20},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":20},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":16},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":16},{"rooms_shortname":"ANGU","rooms_furniture":"Classroom-Movable Tables & Chairs","rooms_seats":16}]
+}
