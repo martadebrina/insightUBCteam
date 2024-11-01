@@ -170,20 +170,15 @@ export class HelperFunction {
 		throw new InsightError("Unexpected type in sections array");
 	}
 
-	public async handleLessThan(where: any, sections: Section[] | Room[], queryId: string): Promise<Section[] | Room[]> {
+	public async handleLessThan(where: any, sections: Section[] | Room[], id: string): Promise<Section[] | Room[]> {
 		const [key, value]: [string, unknown] = Object.entries(where.LT)[0];
-		const param = key.split("_")[1];
-		const dataset = key.split("_")[0];
-		if (dataset !== queryId) {
+		const [dataset, param] = key.split("_");
+
+		if (dataset !== id) {
 			throw new InsightError("");
 		}
-		// console.log(param);
-		if (typeof value !== "number") {
-			throw new InsightError(`Invalid value type for ${key}. Expected a number but got ${typeof value}`);
-		}
-
-		if (isNaN(value)) {
-			throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
+		if (typeof value !== "number" || isNaN(value)) {
+			throw new InsightError("Invalid value type}");
 		}
 
 		if (this.isSectionArray(sections)) {
