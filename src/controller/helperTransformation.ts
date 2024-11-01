@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { InsightError, InsightResult } from "./IInsightFacade";
 import { Room, Section } from "./helperClass";
 import { HelperFunction } from "./helperFunction";
@@ -9,7 +10,7 @@ export class HelperTransformation {
 	private hf = new HelperFunction();
 	private hs = new HelperSort();
 
-	public async handleTransformation(trans: any, sections: Section[] | Room[]): Promise<any[]> {
+	public async handleTransformation(trans: any, sections: Section[] | Room[], queryId: string): Promise<any[]> {
 		// Validate query since the process will be long and we don't want errors
 		if (!trans.GROUP || trans.GROUP.length === 0 || !trans.APPLY) {
 			throw new InsightError("invalid ebnf");
@@ -17,6 +18,15 @@ export class HelperTransformation {
 		const group: string[] = trans.GROUP.map((item: string) => {
 			return item.split("_")[1];
 		});
+		const group2: string[] = trans.GROUP.map((item: string) => {
+			return item.split("_")[0];
+		});
+
+		for (const key of group2) {
+			if (key !== queryId) {
+				throw new InsightError("invalid dataset");
+			}
+		}
 
 		// each string[] here can contain distinct strings, for example when
 		// group by instructor and title, we will have ["Jean", "310"], ["Casey", "310"],
@@ -54,14 +64,14 @@ export class HelperTransformation {
 
 		//console.log(groupedData);
 
-		const result = this.handleApply(trans.APPLY, groupedData as any, trans.GROUP);
+		const result = this.handleApply(trans.APPLY, groupedData as any, trans.GROUP, queryId);
 
 		//console.log(result);
 
 		return result;
 	}
 
-	private handleApply(apply: any[], groupedData: Map<string, Section[]>, group: string): any[] {
+	private handleApply(apply: any[], groupedData: Map<string, any[]>, group: string, queryId: string): any[] {
 		// one result will be {groupKey1: Value1 , groupKey2: Value2, new_col1: agg1, new_col2: agg2, ...}
 		const results: any[] = [];
 
@@ -78,11 +88,17 @@ export class HelperTransformation {
 				applyResult[group[index]] = key; // Match group key to its corresponding group name
 			});
 
+			//console.log(groupKey);
+
 			// Apply each rule to get the result in form of compacted fields,
 			// the result of each aggregation {"MIN" : s_key} will be filled
 			apply.forEach((applyRule) => {
 				const applyKey = Object.keys(applyRule)[0];
 				const operation = Object.keys(applyRule[applyKey])[0];
+				const targetDataset = applyRule[applyKey][operation].split("_")[0];
+				if (targetDataset !== queryId) {
+					throw new InsightError("invalid dataset");
+				}
 				const targetKey = applyRule[applyKey][operation].split("_")[1];
 				applyResult[applyKey] = this.performAggregation(operation, targetKey, sections);
 			});
@@ -95,21 +111,67 @@ export class HelperTransformation {
 	}
 
 	// Helper function to handle aggregation logic
-	private performAggregation(operation: string, param: string, sections: Section[]): number {
+	private performAggregation(operation: string, param: string, sections: any[]): number {
 		switch (operation) {
 			case "MAX":
-				return Math.max(...sections.map((s) => this.hf.getParamNum(param, s)));
+				//return Math.max(...sections.map((s) => this.hf.getParamNum(param, s)));
+				return this.getMaxResult(sections, param);
 			case "MIN":
-				return Math.min(...sections.map((s) => this.hf.getParamNum(param, s)));
+				//return Math.min(...sections.map((s) => this.hf.getParamNum(param, s)));
+				return this.getMinResult(sections, param);
 			case "AVG":
-				return sections.reduce((acc, s) => acc + this.hf.getParamNum(param, s), 0) / sections.length;
+				// return parseFloat(
+				// 	(sections.reduce((acc, s) => acc + this.hf.getParamNum(param, s), 0) / sections.length).toFixed(fixedNumber)
+				// );
+				return this.getAvgResult(sections, param);
 			case "SUM":
-				return sections.reduce((acc, s) => acc + this.hf.getParamNum(param, s), 0);
+				return this.getSumResult(sections, param);
 			case "COUNT":
 				return new Set(sections.map((s) => this.hf.getParamAll(param, s))).size;
 			default:
-				throw new InsightError(`Invalid APPLYTOKEN: ${operation}`);
+				throw new InsightError("Invalid APPLYTOKEN: ${operation}");
 		}
+	}
+
+	private getMaxResult(sections: Room[] | Section[], param: string): number {
+		let maxResult = Number(this.hf.getParamNum(param, sections[0]));
+		for (const section of sections) {
+			const fieldValue = Number(this.hf.getParamNum(param, section));
+			if (maxResult < fieldValue) {
+				maxResult = fieldValue;
+			}
+		}
+		return maxResult;
+	}
+
+	private getMinResult(sections: Room[] | Section[], param: string): number {
+		let maxResult = Number(this.hf.getParamNum(param, sections[0]));
+		for (const section of sections) {
+			const fieldValue = Number(this.hf.getParamNum(param, section));
+			if (maxResult > fieldValue) {
+				maxResult = fieldValue;
+			}
+		}
+		return maxResult;
+	}
+
+	private getAvgResult(sections: Room[] | Section[], param: string): number {
+		const fixedNumber = 2;
+		let sum = new Decimal(0);
+		for (const section of sections) {
+			sum = sum.add(new Decimal(Number(this.hf.getParamNum(param, section))));
+		}
+		const avg = sum.toNumber() / sections.length;
+		return Number(avg.toFixed(fixedNumber));
+	}
+
+	private getSumResult(sections: Room[] | Section[], param: string): number {
+		const magicNumberLMAO = 2;
+		let sum = new Decimal(0);
+		for (const section of sections) {
+			sum = sum.add(new Decimal(Number(this.hf.getParamNum(param, section))));
+		}
+		return Number(sum.toFixed(magicNumberLMAO));
 	}
 
 	public async handleTransOptions(options: any, filtered: any[], queryId: string): Promise<InsightResult[]> {
@@ -124,7 +186,7 @@ export class HelperTransformation {
 				if (Object.prototype.hasOwnProperty.call(item, column)) {
 					result[column] = item[column];
 				} else {
-					throw new InsightError(`Column ${column} not found in transformed dataset.`);
+					throw new InsightError("Column ${column} not found in transformed dataset.");
 				}
 			});
 

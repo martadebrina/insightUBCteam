@@ -1,0 +1,53 @@
+{
+	"title": "Unexpected response status 400: All ORDER keys must be in COLUMNS",
+	"input": {
+		"WHERE": {
+			"AND": [
+				{
+					"IS": {
+						"rooms_furniture": "*Tables*"
+					}
+				},
+				{
+					"GT": {
+						"rooms_seats": 300
+					}
+				}
+			]
+		},
+		"OPTIONS": {
+			"COLUMNS": ["rooms_shortname", "minSeats"],
+			"ORDER": {
+				"dir": "DOWN",
+				"keys": ["minSeats", "totalSeats", "expectedSeats", "numDifferentLayouts"]
+			}
+		},
+		"TRANSFORMATIONS": {
+			"GROUP": ["rooms_shortname"],
+			"APPLY": [
+				{
+					"minSeats": {
+						"MIN": "rooms_seats"
+					}
+				},
+				{
+					"totalSeats": {
+						"SUM": "rooms_seats"
+					}
+				},
+				{
+					"expectedSeats": {
+						"AVG": "rooms_seats"
+					}
+				},
+				{
+					"numDifferentLayouts": {
+						"COUNT": "rooms_seats"
+					}
+				}
+			]
+		}
+	},
+	"errorExpected": true,
+	"expected": "InsightError"
+}

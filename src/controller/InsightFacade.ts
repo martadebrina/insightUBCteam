@@ -27,7 +27,7 @@ export default class InsightFacade implements IInsightFacade {
 	private hs = new HelperSort();
 
 	public async addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-		await this.loadDatasetsFromDisk(kind);
+		await this.loadDatasetsFromDisk();
 
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
@@ -61,8 +61,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async removeDataset(id: string): Promise<string> {
-		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
-		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
+		await this.loadDatasetsFromDisk();
 
 		if (!this.hf.isValidId(id)) {
 			throw new InsightError("Invalid id");
@@ -123,8 +122,7 @@ export default class InsightFacade implements IInsightFacade {
 	}
 
 	public async listDatasets(): Promise<InsightDataset[]> {
-		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
-		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
+		await this.loadDatasetsFromDisk();
 
 		const insightDatasetList: InsightDataset[] = [];
 		const datasetList = this.datasets.entries();
@@ -143,8 +141,7 @@ export default class InsightFacade implements IInsightFacade {
 
 	public async performQuery(query: unknown): Promise<InsightResult[]> {
 		// load from disk
-		await this.loadDatasetsFromDisk(InsightDatasetKind.Sections);
-		await this.loadDatasetsFromDisk(InsightDatasetKind.Rooms);
+		await this.loadDatasetsFromDisk();
 
 		if (typeof query !== "object" || query === null) {
 			throw new InsightError("Invalid Query: Starting");
@@ -169,7 +166,7 @@ export default class InsightFacade implements IInsightFacade {
 		let result;
 		if (TRANSFORMATIONS) {
 			// changed filtered type from (Section | Room)[] into Object[]
-			filtered = await this.ht.handleTransformation(TRANSFORMATIONS, filtered);
+			filtered = await this.ht.handleTransformation(TRANSFORMATIONS, filtered, queryId);
 			result = await this.ht.handleTransOptions(OPTIONS, filtered, queryId);
 		} else {
 			result = await this.handleOptions(OPTIONS, filtered, queryId);
@@ -263,28 +260,28 @@ export default class InsightFacade implements IInsightFacade {
 		return results;
 	}
 
-	private async loadDatasetsFromDisk(k: InsightDatasetKind): Promise<void> {
-		if (k === InsightDatasetKind.Sections || k === InsightDatasetKind.Rooms) {
-			const exist = await fs.pathExists("./data/Datasets.json");
+	private async loadDatasetsFromDisk(): Promise<void> {
+		//if (k === InsightDatasetKind.Sections || k === InsightDatasetKind.Rooms) {
+		const exist = await fs.pathExists("./data/Datasets.json");
 
-			if (!exist) {
-				return;
-			}
-
-			const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
-
-			for (const [id, dataset] of datasetArray) {
-				if (this.datasets.has(id)) {
-					continue;
-				}
-				const newData = new Datasets(k);
-				newData.sections = dataset.sections;
-				newData.rooms = dataset.rooms;
-				newData.numRows = dataset.numRows;
-				newData.kind = dataset.kind;
-				this.datasets.set(id, newData);
-			}
+		if (!exist) {
+			return;
 		}
+
+		const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
+
+		for (const [id, dataset] of datasetArray) {
+			if (this.datasets.has(id)) {
+				continue;
+			}
+			const newData = new Datasets(dataset.kind); // change from k to dataset.kind
+			newData.sections = dataset.sections;
+			newData.rooms = dataset.rooms;
+			newData.numRows = dataset.numRows;
+			newData.kind = dataset.kind;
+			this.datasets.set(id, newData);
+		}
+		//}
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {
