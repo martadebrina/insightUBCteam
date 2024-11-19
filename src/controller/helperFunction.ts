@@ -175,6 +175,8 @@ export class HelperFunction {
 			throw new InsightError(`Invalid value for ${key}. NaN is not allowed.`);
 		}
 
+		//console.log(sections);
+
 		if (this.isSectionArray(sections)) {
 			return sections.filter((s: Section) => this.getParamNum(param, s) > value) as Section[];
 		} else if (this.isRoomArray(sections)) {
