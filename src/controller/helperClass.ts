@@ -52,6 +52,7 @@ export class Section {
 			} else {
 				this.year = this.anyToNum(section.Year);
 			}
+
 			this.avg = this.anyToNum(section.Avg);
 			this.pass = this.anyToNum(section.Pass);
 			this.fail = this.anyToNum(section.Fail);
@@ -79,9 +80,10 @@ export class Section {
 
 	public anyToNum(n: any): number {
 		const num = Number(n);
-		if (isNaN(num)) {
-			throw new InsightError("n is not a number");
-		}
+		// if (isNaN(num)) {
+		// 	console.log("hellp");
+		// 	throw new InsightError("n is not a number");
+		// }
 		return num;
 	}
 }

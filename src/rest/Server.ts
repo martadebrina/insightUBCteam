@@ -3,6 +3,8 @@ import { StatusCodes } from "http-status-codes";
 import Log from "@ubccpsc310/folder-test/build/Log";
 import * as http from "http";
 import cors from "cors";
+import InsightFacade from "../controller/InsightFacade";
+import { InsightDatasetKind, InsightError, NotFoundError } from "../controller/IInsightFacade";
 
 export default class Server {
 	private readonly port: number;
@@ -20,7 +22,7 @@ export default class Server {
 		// NOTE: you can serve static frontend files in from your express server
 		// by uncommenting the line below. This makes files in ./frontend/public
 		// accessible at http://localhost:<port>/
-		// this.express.use(express.static("./frontend/public"))
+		this.express.use(express.static("./frontend/public"));
 	}
 
 	/**
@@ -89,6 +91,72 @@ export default class Server {
 		this.express.get("/echo/:msg", Server.echo);
 
 		// TODO: your other endpoints should go here
+		const insightFacade = new InsightFacade();
+
+		this.express.put("/dataset/:id/:kind", async (req, res) => this.handlePutDataset(req, res, insightFacade));
+		this.express.delete("/dataset/:id", async (req, res) => this.handleDeleteDataset(req, res, insightFacade));
+		this.express.post("/query", async (req, res) => this.handlePostQuery(req, res, insightFacade));
+		this.express.get("/datasets", async (req, res) => this.handleGetDatasets(req, res, insightFacade));
+	}
+
+	private async handlePutDataset(req: Request, res: Response, insightFacade: InsightFacade): Promise<void> {
+		const { id, kind } = req.params;
+		const content = req.body.toString("base64");
+		const success = 200;
+		const reject = 400;
+
+		try {
+			let insightDatasetKind;
+			if (kind === "sections") {
+				insightDatasetKind = InsightDatasetKind.Sections;
+			} else if (kind === "rooms") {
+				insightDatasetKind = InsightDatasetKind.Rooms;
+			} else {
+				throw new InsightError("Invalid dataset kind");
+			}
+			const results = await insightFacade.addDataset(id, content, insightDatasetKind);
+			res.status(success).json({ result: results });
+		} catch (_err) {
+			res.status(reject).json({ error: (_err as any).message });
+		}
+	}
+
+	private async handleDeleteDataset(req: Request, res: Response, insightFacade: InsightFacade): Promise<void> {
+		const { id } = req.params;
+		const success = 200;
+		const reject = 400;
+		const notFound = 404;
+
+		try {
+			const results = await insightFacade.removeDataset(id);
+			res.status(success).json({ result: results });
+		} catch (_err) {
+			if (_err instanceof InsightError) {
+				res.status(reject).json({ error: (_err as any).message });
+			} else if (_err instanceof NotFoundError) {
+				res.status(notFound).json({ error: (_err as any).message });
+			}
+		}
+	}
+
+	private async handlePostQuery(req: Request, res: Response, insightFacade: InsightFacade): Promise<void> {
+		const query = req.body;
+		const success = 200;
+		const reject = 400;
+
+		try {
+			const results = await insightFacade.performQuery(query);
+			res.status(success).json({ result: results });
+		} catch (_err) {
+			//console.error("Query Error:", _err);
+			res.status(reject).json({ error: (_err as any).message });
+		}
+	}
+
+	private async handleGetDatasets(_req: Request, res: Response, insightFacade: InsightFacade): Promise<void> {
+		const success = 200;
+		const results = await insightFacade.listDatasets();
+		res.status(success).json({ result: results });
 	}
 
 	// The next two methods handle the echo service.
