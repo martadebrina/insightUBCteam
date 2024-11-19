@@ -2,14 +2,22 @@ import { expect } from "chai";
 import request, { Response } from "supertest";
 import { StatusCodes } from "http-status-codes";
 import Log from "@ubccpsc310/folder-test/build/Log";
+import { clearDisk } from "../TestUtil";
+import { Server } from "http";
+import Servers from "../../src/rest/Server";
 
 describe("Facade C3", function () {
+	let server: Servers;
+
 	before(function () {
 		// TODO: start server here once and handle errors properly
+		server = new Servers(4321);
+		server.start();
 	});
 
 	after(function () {
 		// TODO: stop server here once!
+		server.stop();
 	});
 
 	beforeEach(function () {
@@ -18,6 +26,7 @@ describe("Facade C3", function () {
 
 	afterEach(function () {
 		// might want to add some process logging here to keep track of what is going on
+		clearDisk();
 	});
 
 	// Sample on how to format PUT requests

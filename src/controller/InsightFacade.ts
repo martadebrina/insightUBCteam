@@ -280,12 +280,21 @@ export default class InsightFacade implements IInsightFacade {
 			if (this.datasets.has(id)) {
 				continue;
 			}
-			const newData = new Datasets(dataset.kind); // change from k to dataset.kind
-			newData.sections = dataset.sections;
-			newData.rooms = dataset.rooms;
+
+			const newData = new Datasets(dataset.kind);
+			if (dataset.kind == InsightDatasetKind.Sections) {
+				newData.sections = dataset.sections.map((section: any) => {
+					return new Section(section);
+				});
+			} else if (dataset.kind == InsightDatasetKind.Rooms) {
+				newData.rooms = dataset.sections.map((rooms: any) => {
+					return new Room(rooms);
+				});
+			}
 			newData.numRows = dataset.numRows;
 			newData.kind = dataset.kind;
-			this.datasets.set(id, newData);
+			this.datasets.set(id, dataset);
+
 		}
 		//}
 	}
@@ -326,6 +335,7 @@ export default class InsightFacade implements IInsightFacade {
 	private async saveDatasetsDisk(datasets: Map<String, Datasets>): Promise<void> {
 		// Convert Map to an object before writing, from chatGPT
 		const datasetsArray = Array.from(datasets.entries());
+
 
 		await fs.ensureDir("./data");
 
