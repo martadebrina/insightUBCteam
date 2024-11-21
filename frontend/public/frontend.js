@@ -150,7 +150,7 @@ async function generateChart(department) {
         const datasetIds = await fetchAllDatasetIds();
         const combinedData = [];
 
-		alert(JSON.stringify(datasetIds, null, 2));
+		//alert(JSON.stringify(datasetIds, null, 2));
 
         // Query each dataset and combine results
         for (const datasetId of datasetIds) {
@@ -162,14 +162,10 @@ async function generateChart(department) {
                 },
                 body: JSON.stringify(query)
             });
-			alert(JSON.stringify(query, null, 2));
-			alert(JSON.stringify(response, null, 2));
 
             if (response.ok) {
                 const result = await response.json();
-				alert(JSON.stringify(result, null, 2));
-                combinedData.push(...result.result); // Combine results from each dataset
-				alert(JSON.stringify(combinedData, null, 2));
+                combinedData.push(...result.result);
             } else {
                 const error = await response.text();
                 console.warn(`Error querying dataset ${datasetId}: ${error}`);
@@ -196,7 +192,6 @@ function drawChart(data) {
 
     const labels = data.map((entry) => entry.sections_id);
     const averages = data.map((entry) => entry.overallavg);
-	alert(JSON.stringify(labels, null, 2));
 
     chartInstance = new Chart(ctx, {
         type: "bar",
