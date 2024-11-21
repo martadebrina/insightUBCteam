@@ -22,7 +22,7 @@
                 <label for="dataset-kind">Dataset Kind:</label>
                 <select id="dataset-kind" name="dataset-kind" required>
                     <option value="sections">Sections</option>
-                    <option value="rooms">Rooms</option>
+                    <!--<option value="rooms">Rooms</option>-->
                 </select>
 
                 <label for="dataset-file">Upload Dataset (.zip):</label>
@@ -48,6 +48,18 @@
             <button id="list-datasets-btn" class="button">View Datasets</button>
             <ul id="dataset-list"></ul>
         </section>
+
+        <section>
+            <h2>Enrollment Trends</h2>
+            <form id="enrollment-form">
+                <label for="course-id">Course ID:</label>
+                <input type="text" id="course-id" name="course-id" placeholder="e.g., CPSC110" required>
+        
+                <button type="submit" class="button">Generate Chart</button>
+            </form>
+            <p id="query-status"></p>
+            <canvas id="enrollment-chart" width="800" height="400"></canvas>
+        </section>               
 
 		<section>
 			<h2>View Course Averages</h2>
