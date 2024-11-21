@@ -49,26 +49,18 @@
             <ul id="dataset-list"></ul>
         </section>
 
-        <section>
-            <h2>Search for Professor</h2>
-            <form id="professor-search-form">
-                <label for="professor-name">Professor Name:</label>
-                <input type="text" id="professor-name" name="professor-name" placeholder="e.g., Dr. Smith" required>
-                <button id="search-professor" class="button" type="submit">Search</button>
-            </form>
-            <p id="professor-search-status"></p>
-            <table id="professor-results-table" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th>Course</th>
-                        <th>Section</th>
-                        <th>Average Grade</th>
-                    </tr>
-                </thead>
-                <tbody id="professor-results-body"></tbody>
-            </table>
-        </section>
-        
+		<section>
+			<h2>View Course Averages</h2>
+			<form id="filter-form">
+				<label for="department">Department (optional):</label>
+				<input type="text" id="department" name="department" placeholder="e.g., CPSC">
+				<button id="generate-chart" class="button" type="submit">Generate Chart</button>
+			</form>
+			<p id="query-status"></p>
+			<div>
+				<canvas id="course-chart" width="800" height="400"></canvas>
+			</div>
+		</section>
 
     </main>
 

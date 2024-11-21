@@ -22,6 +22,7 @@ section {
     border-radius: 8px;
     padding: 1rem;
     background: #f9f9f9;
+	overflow-x: auto;
 }
 
 label {
@@ -64,10 +65,10 @@ footer {
     text-align: center;
     background: #007bff;
     color: white;
-    padding: 1rem 0;
+    padding: 0;
     position: fixed;
     width: 100%;
-    bottom: 0; 
+    bottom: 0;
 }
 
 table {
