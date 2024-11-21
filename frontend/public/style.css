@@ -69,3 +69,30 @@ footer {
     width: 100%;
     bottom: 0; 
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 1rem;
+    background: #fff;
+}
+
+table th, table td {
+    text-align: left;
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+}
+
+table th {
+    background: #007bff;
+    color: white;
+}
+
+table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+table tr:hover {
+    background: #f1f1f1;
+}

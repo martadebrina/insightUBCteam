@@ -80,3 +80,97 @@ document.getElementById("remove-dataset-form").addEventListener("submit", async 
         document.getElementById("remove-status").textContent = `Error: ${err.message}`;
     }
 });
+
+// Handle professor search form submission
+document.getElementById("professor-search-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearProfessorResults();
+
+    const professorName = document.getElementById("professor-name").value.trim();
+    if (!professorName) {
+        document.getElementById("professor-search-status").textContent = "Please enter a professor's name.";
+        return;
+    }
+
+    const query = buildProfessorQuery(professorName);
+    alert(JSON.stringify(query, null, 2));
+
+    try {
+        const response = await fetch(`${SERVER_URL}/query`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(query)
+        });
+
+        //alert(JSON.stringify(response.body, null, 2));
+
+        if (response.ok) {
+            const result = await response.json();
+            alert(JSON.stringify(result.result, null, 2));
+            displayProfessorResults(result.result);
+        } else {
+            const error = await response.text();
+            document.getElementById("professor-search-status").textContent = `Error: ${error}`;
+        }
+    } catch (err) {
+        document.getElementById("professor-search-status").textContent = `Error: ${err.message}`;
+    }
+});
+
+// Build query for professor search
+function buildProfessorQuery(professorName) {
+    return {
+        "WHERE": {
+            "IS": {
+                "sections_instructor": "*john*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": ["sections_instructor", "sections_id", "overallavg"],
+            "ORDER": {
+                "dir": "DOWN",
+                "keys": ["overallavg"]
+            }
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["sections_instructor", "sections_id"],
+            "APPLY": [
+                {
+                    "overallavg": {
+                        "AVG": "sections_avg"
+                    }
+                }
+            ]
+        }
+    };
+}
+
+function displayProfessorResults(data) {
+    console.log("Received data:", data); // Log the data for debugging
+
+    const tableBody = document.getElementById("professor-results-body");
+    if (data.length === 0) {
+        document.getElementById("professor-search-status").textContent = "No results found for the given professor.";
+        return;
+    }
+
+    data.forEach((entry) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${entry.sections_course || "Unknown"}</td>
+            <td>${entry.sections_id || "Unknown"}</td>
+            <td>${entry.overall_avg !== undefined ? entry.overall_avg.toFixed(2) : "N/A"}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+
+// Clear previous results
+function clearProfessorResults() {
+    document.getElementById("professor-search-status").textContent = "";
+    const tableBody = document.getElementById("professor-results-body");
+    tableBody.innerHTML = "";
+}
