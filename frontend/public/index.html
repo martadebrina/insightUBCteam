@@ -49,6 +49,19 @@
             <ul id="dataset-list"></ul>
         </section>
 
+		<section>
+			<h2>View Course Averages</h2>
+			<form id="filter-form">
+				<label for="department">Department (optional):</label>
+				<input type="text" id="department" name="department" placeholder="e.g., CPSC">
+				<button id="generate-chart" class="button" type="submit">Generate Chart</button>
+			</form>
+			<p id="query-status"></p>
+			<div>
+				<canvas id="course-chart" width="800" height="400"></canvas>
+			</div>
+		</section>
+
     </main>
 
     <footer>
