@@ -46,7 +46,7 @@ describe("Facade C3", function () {
 	afterEach(async function () {
 		// might want to add some process logging here to keep track of what is going on
 		Log.info("Completed a test...");
-		//await clearDisk();
+		await clearDisk();
 	});
 
 	// Sample on how to format PUT requests
