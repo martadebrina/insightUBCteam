@@ -338,7 +338,6 @@ export default class InsightFacade implements IInsightFacade {
 		// Convert Map to an object before writing, from chatGPT
 		const datasetsArray = Array.from(datasets.entries());
 
-
 		await fs.ensureDir("./data");
 
 		await fs.writeJSON("./data/Datasets.json", datasetsArray);
