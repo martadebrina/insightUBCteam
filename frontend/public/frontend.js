@@ -116,7 +116,7 @@ function buildQueryForDataset(datasetId, department) {
     if (department) {
         query.WHERE = {
 			IS: {
-			  "sections_dept": `${department}`
+			  [`${datasetId}_dept`] : `${department}`
 			}
 		  };
     }
@@ -163,6 +163,8 @@ async function generateChart(department) {
                 body: JSON.stringify(query)
             });
 
+			//alert(JSON.stringify(query, null, 2));
+
             if (response.ok) {
                 const result = await response.json();
                 combinedData.push(...result.result);
@@ -171,9 +173,7 @@ async function generateChart(department) {
                 console.warn(`Error querying dataset ${datasetId}: ${error}`);
             }
         }
-
-        // Pass combined data to the chart
-        drawChart(combinedData);
+        drawChart(combinedData, datasetIds);
     } catch (err) {
         document.getElementById("query-status").textContent = `Error: ${err.message}`;
     }
@@ -182,7 +182,7 @@ async function generateChart(department) {
 // Draw the chart using Chart.js
 let chartInstance = null;
 
-function drawChart(data) {
+function drawChart(data, datasetIds) {
     const ctx = document.getElementById("course-chart").getContext("2d");
 
     // Destroy previous chart instance if it exists
@@ -190,7 +190,11 @@ function drawChart(data) {
         chartInstance.destroy();
     }
 
-    const labels = data.map((entry) => entry.sections_id);
+    //const labels = data.map((entry) => entry.datasetId_id);
+	const labels = data.map((entry) => {
+        const datasetId = datasetIds.find((id) => `${id}_id` in entry);
+        return entry[`${datasetId}_id`];
+    });
     const averages = data.map((entry) => entry.overallavg);
 
     chartInstance = new Chart(ctx, {
