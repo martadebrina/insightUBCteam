@@ -74,6 +74,42 @@
 			</div>
 		</section>
 
+        <section>
+            <h2>Grade Trends</h2>
+            <form id="grade-trends-form">
+                <label for="grade-course-id">Course ID:</label>
+                <input type="text" id="grade-course-id" name="grade-course-id" placeholder="e.g., CPSC110" required>
+                <button type="submit" class="button">Generate Chart</button>
+            </form>
+            <p id="grade-query-status"></p>
+            <canvas id="grade-trends-chart" width="800" height="400"></canvas>
+        </section>                    
+        
+        <section>
+            <h2>Search Professor</h2>
+            <form id="professor-search-form">
+                <label for="professor-name">Professor's Name:</label>
+                <input type="text" id="professor-name" placeholder="Enter professor's name" required>
+                <button type="submit" class="button">Search</button>
+            </form>
+            <button id="clear-table-btn" class="button">Clear Table</button>
+            <div id="professor-results">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course Title</th>
+                            <th>Section UUID</th>
+                            <th>Average Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <button id="scroll-to-top-btn" class="scroll-to-top-btn" onclick="scrollToTop()">&#9650;</button>
+
+
     </main>
 
     <footer>
