@@ -140,7 +140,7 @@ export default class Server {
 	}
 
 	private async handlePostQuery(req: Request, res: Response, insightFacade: InsightFacade): Promise<void> {
-		const { query } = req.params;
+		const query = req.body;
 		const success = 200;
 		const reject = 400;
 
@@ -148,6 +148,7 @@ export default class Server {
 			const results = await insightFacade.performQuery(query);
 			res.status(success).json({ result: results });
 		} catch (_err) {
+			//console.error("Query Error:", _err);
 			res.status(reject).json({ error: (_err as any).message });
 		}
 	}

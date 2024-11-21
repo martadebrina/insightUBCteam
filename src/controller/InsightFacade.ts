@@ -19,7 +19,7 @@ import { HelperSort } from "./helperSort";
 // import * as path from "path";
 
 export default class InsightFacade implements IInsightFacade {
-	private datasets = new Map<string, Datasets>();
+	public datasets = new Map<string, Datasets>();
 	private hf = new HelperFunction();
 	private hr = new HelperRoom();
 	private hw = new HelperWhere();
@@ -151,6 +151,8 @@ export default class InsightFacade implements IInsightFacade {
 
 		const { foundDataset, queryId } = await this.validateQuery(WHERE, OPTIONS, TRANSFORMATIONS, query);
 
+		//console.log(foundDataset);
+
 		let filtered: Section[] | Room[] = [];
 		if (foundDataset.kind === InsightDatasetKind.Sections) {
 			filtered = await this.hw.handleWhere(WHERE, foundDataset.sections, queryId);
@@ -280,23 +282,23 @@ export default class InsightFacade implements IInsightFacade {
 			if (this.datasets.has(id)) {
 				continue;
 			}
-
-			const newData = new Datasets(dataset.kind);
-			if (dataset.kind == InsightDatasetKind.Sections) {
+			const newData = new Datasets(dataset.kind); // change from k to dataset.kind
+			if (dataset.kind === InsightDatasetKind.Sections) {
 				newData.sections = dataset.sections.map((section: any) => {
+					//console.log(section.id);
 					return new Section(section);
 				});
-			} else if (dataset.kind == InsightDatasetKind.Rooms) {
+			} else if (dataset.kind === InsightDatasetKind.Rooms) {
 				newData.rooms = dataset.sections.map((rooms: any) => {
 					return new Room(rooms);
 				});
 			}
 			newData.numRows = dataset.numRows;
 			newData.kind = dataset.kind;
-			this.datasets.set(id, dataset);
+			this.datasets.set(id, newData);
 
+			//console.log(newData);
 		}
-		//}
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {

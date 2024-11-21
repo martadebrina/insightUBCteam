@@ -1,13 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>310 Frontend</title>
     <link href="/style.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<button id="click-me-button" class="button">Click Me!</button>
+    <header>
+        <h1>Sections Insight</h1>
+    </header>
 
-<script type="text/javascript" src="/frontend.js"></script>
+    <main>
+        <section>
+            <h2>Upload Dataset</h2>
+            <form id="upload-form">
+                <label for="dataset-id">Dataset ID:</label>
+                <input type="text" id="dataset-id" name="dataset-id" required>
+
+                <label for="dataset-kind">Dataset Kind:</label>
+                <select id="dataset-kind" name="dataset-kind" required>
+                    <option value="sections">Sections</option>
+                    <option value="rooms">Rooms</option>
+                </select>
+
+                <label for="dataset-file">Upload Dataset (.zip):</label>
+                <input type="file" id="dataset-file" name="dataset-file" accept=".zip" required>
+
+                <button id="upload-button" class="button" type="submit">Upload Dataset</button>
+            </form>
+            <p id="upload-status"></p>
+        </section>
+
+        <section>
+            <h2>Remove Dataset</h2>
+            <form id="remove-dataset-form">
+                <label for="remove-dataset-id">Dataset ID:</label>
+                <input type="text" id="remove-dataset-id" name="remove-dataset-id" required>
+                <button id="remove-dataset-button" class="button" type="submit">Remove Dataset</button>
+            </form>
+            <p id="remove-status"></p>
+        </section>
+
+        <section>
+            <h2>List Datasets</h2>
+            <button id="list-datasets-btn" class="button">View Datasets</button>
+            <ul id="dataset-list"></ul>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; Team Kodok</p>
+    </footer>
+
+    <script type="text/javascript" src="/frontend.js"></script>
 </body>
 </html>
