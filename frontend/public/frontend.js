@@ -586,18 +586,18 @@ function drawGradeTrendsChart(data, datasetId) {
 // USER STORY: PROFESSOR GRADE OVERVIEW ///////////////////////////////////////////////////////////////////////////////////////
 document.getElementById("professor-search-form").addEventListener("submit", async (e) => {
     e.preventDefault();
- 
- 
+
+
     const professorName = document.getElementById("professor-name").value.trim();
     if (!professorName) return alert("Please enter a professor's name.");
- 
- 
+
+
     try {
         // Fetch all dataset IDs
         const datasetIds = await fetchAllDatasetIds();
         const combinedData = [];
- 
- 
+
+
         // Query datasets for professor-specific data
         for (const datasetId of datasetIds) {
             const query = buildProfessorQuery(professorName, datasetId);
@@ -608,8 +608,8 @@ document.getElementById("professor-search-form").addEventListener("submit", asyn
                 },
                 body: JSON.stringify(query),
             });
- 
- 
+
+
             if (response.ok) {
                 const result = await response.json();
                 combinedData.push(...result.result);
@@ -617,16 +617,16 @@ document.getElementById("professor-search-form").addEventListener("submit", asyn
                 console.warn(`Error querying dataset ${datasetId}:`, await response.text());
             }
         }
- 
- 
+
+
         // Display the results
         displayProfessorResults(combinedData, datasetIds);
     } catch (err) {
         alert(`Error: ${err.message}`);
     }
  });
- 
- 
+
+// USER STORY: PROFESSOR GRADE OVERVIEW ///////////////////////////////////////////////////////////////////////////////////////
  function buildProfessorQuery(professorName, datasetId) {
     return {
         WHERE: {
@@ -651,25 +651,22 @@ document.getElementById("professor-search-form").addEventListener("submit", asyn
         }
     }
  }
- 
- 
- 
- 
+
  function displayProfessorResults(data, datasetIds) {
     const resultsBody = document.getElementById("results-body");
     resultsBody.innerHTML = ""
- 
- 
+
+
     data.forEach((row) => {
         const datasetId = datasetIds.find((id) => `${id}_title` in row);
- 
- 
+
+
         if (!datasetId) {
             console.warn("Unable to resolve datasetId for row:", row);
             return;
         }
- 
- 
+
+
         // Create a new table row for each result
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -686,4 +683,262 @@ document.getElementById("professor-search-form").addEventListener("submit", asyn
     resultsBody.innerHTML = ""; // Clear the table
     console.log("Table cleared.");
 });
- 
+
+
+
+// USER STORY: Low Average Course ///////////////////////////////////////////////////////////////////////////////////////
+document.getElementById("course-filter-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const department = document.getElementById("department-filter").value.trim();
+    const gradeThreshold = parseFloat(document.getElementById("grade-threshold").value);
+
+    if (!department || isNaN(gradeThreshold)) {
+        alert("Please enter valid values for both department and grade threshold.");
+        return;
+    }
+
+    try {
+        // Fetch all dataset IDs
+        const datasetIds = await fetchAllDatasetIds();
+        const combinedData = [];
+
+        // Query each dataset
+        for (const datasetId of datasetIds) {
+            const query = buildCourseFilterQuery(department, gradeThreshold, datasetId);
+            const response = await fetch(`${SERVER_URL}/query`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(query),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                combinedData.push(...result.result);
+            } else {
+                console.warn(`Error querying dataset ${datasetId}:`, await response.text());
+            }
+        }
+
+        displayFilterResults(combinedData, datasetIds);
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    }
+});
+
+function buildCourseFilterQuery(department, gradeThreshold, datasetId) {
+    return {
+		WHERE: {
+		  AND: [
+			{
+			  IS: {
+				[`${datasetId}_dept`]: `${department}`
+			  }
+			},
+			{
+			  LT: {
+				[`${datasetId}_avg`]: gradeThreshold
+			  }
+			}
+		  ]
+		},
+		OPTIONS: {
+		  COLUMNS: [
+			`${datasetId}_title`,
+			`${datasetId}_instructor`,
+			`${datasetId}_avg`
+		  ],
+		  ORDER: {
+			dir: "UP",
+			keys: [`${datasetId}_avg`]
+		}
+		}
+	  };
+}
+
+function displayFilterResults(data, datasetIds) {
+    const resultsBody = document.getElementById("filter-results-body");
+    resultsBody.innerHTML = ""; // Clear previous results
+
+    if (data.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="3">No courses found matching the criteria.</td>`;
+        resultsBody.appendChild(tr);
+        return;
+    }
+
+    data.forEach((row) => {
+        const datasetId = datasetIds.find((id) => `${id}_title` in row);
+        if (!datasetId) return;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row[`${datasetId}_title`] || "N/A"}</td>
+            <td>${row[`${datasetId}_instructor`] || "N/A"}</td>
+            <td>${row[`${datasetId}_avg`] ? row[`${datasetId}_avg`].toFixed(2) : "N/A"}</td>
+        `;
+        resultsBody.appendChild(tr);
+    });
+}
+
+document.getElementById("clear-filter-table-btn").addEventListener("click", () => {
+    const resultsBody = document.getElementById("filter-results-body");
+    resultsBody.innerHTML = ""; // Clear the table content
+    console.log("Filter results table cleared.");
+});
+
+
+
+// USER STORY: View Course Pass/Fail Trends by Year ///////////////////////////////////////////////////////////////////////////////////////
+document.getElementById("pass-fail-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+
+    const courseName = document.getElementById("course-name").value.trim();
+
+
+    // Validate Course Name
+    if (!courseName) {
+        document.getElementById("query-status").textContent = "Course name is required.";
+        return;
+    }
+
+
+    // Clear previous messages and fetch data
+    document.getElementById("query-status").textContent = "";
+    generatePassFailChart(courseName);
+});
+
+
+async function generatePassFailChart(courseName) {
+    clearAllMessages();
+
+
+    try {
+        const datasetIds = await fetchAllDatasetIds();
+        const combinedData = [];
+
+
+        for (const datasetId of datasetIds) {
+            const query = buildPassFailQuery(courseName, datasetId);
+            const response = await fetch(`${SERVER_URL}/query`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(query)
+            });
+
+
+            if (response.ok) {
+                const result = await response.json();
+                combinedData.push(...result.result.map((entry) => ({ ...entry, datasetId })));
+            } else {
+                const error = await response.text();
+                console.warn(`Error querying dataset ${datasetId}: ${error}`);
+            }
+        }
+
+
+        if (combinedData.length === 0) {
+            document.getElementById("query-status").textContent = "No data found for the specified course.";
+            return;
+        }
+
+
+        // Pass the first dataset ID for dynamic field names
+        drawPassFailChart(combinedData, datasetIds[0]);
+    } catch (err) {
+        document.getElementById("query-status").textContent = `Error: ${err.message}`;
+    }
+}
+
+function buildPassFailQuery(courseName, datasetId) {
+    return {
+        WHERE: {
+            IS: { [`${datasetId}_id`]: courseName }
+        },
+        OPTIONS: {
+            COLUMNS: [
+                `${datasetId}_id`,
+                `${datasetId}_year`,
+                `totalpass`,
+                `totalfail`
+            ],
+            ORDER: {
+                dir: "UP", // Recent years first
+                keys: [`${datasetId}_year`]
+            }
+        },
+        TRANSFORMATIONS: {
+            GROUP: [`${datasetId}_id`, `${datasetId}_year`],
+            APPLY: [
+                { totalpass: { SUM: `${datasetId}_pass` } },
+                { totalfail: { SUM: `${datasetId}_fail` } }
+            ]
+        }
+    };
+}
+
+
+let passFailChartInstance = null;
+
+function drawPassFailChart(data, datasetId) {
+    const ctx = document.getElementById("pass-fail-chart").getContext("2d");
+
+
+    // Destroy the existing chart instance if it exists
+    if (passFailChartInstance) {
+        passFailChartInstance.destroy();
+    }
+
+
+    // Dynamically extract labels and data
+    const labels = data.map((entry) => entry[`${datasetId}_year`]); // x-axis: years
+    const passCounts = data.map((entry) => entry.totalpass); // Pass data
+    const failCounts = data.map((entry) => entry.totalfail); // Fail data
+
+
+    // Create a new chart instance
+    passFailChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Pass",
+                    data: passCounts,
+                    backgroundColor: "rgba(75, 192, 192, 0.6)"
+                },
+                {
+                    label: "Fail",
+                    data: failCounts,
+                    backgroundColor: "rgba(255, 99, 132, 0.6)"
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Year"
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Number of Students"
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+
