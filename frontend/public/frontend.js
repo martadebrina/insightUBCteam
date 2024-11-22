@@ -1,3 +1,7 @@
+// Citation:
+// 	To get the syntax for implementation we use CHATGPT.
+// 	OpenAI. (2024). Assistance with JavaScript and Query Implementation for Dataset Analysis. Retrieved from ChatGPT by OpenAI.
+
 const SERVER_URL = "http://localhost:4321";
 
 // Show the button when scrolling down
@@ -19,8 +23,8 @@ function scrollToTop() {
     });
 }
 
-
-// Upload Dataset
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// UPLOAD DATASET
 document.getElementById("upload-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -57,7 +61,9 @@ document.getElementById("upload-form").addEventListener("submit", async (e) => {
     }
 });
 
-// List Datasets
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LIST DATASET
 document.getElementById("list-datasets-btn").addEventListener("click", async () => {
     const url = `${SERVER_URL}/datasets`;
 
@@ -77,7 +83,8 @@ document.getElementById("list-datasets-btn").addEventListener("click", async () 
     }
 });
 
-// Remove Dataset
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// REMOVE DATASET
 document.getElementById("remove-dataset-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -110,165 +117,19 @@ function clearAllMessages() {
     ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
 }
 
-// Build a query for a specific dataset with an optional department filter
-function buildQueryForDataset(datasetId, department) {
-    const query = {
-        WHERE: {},
-        OPTIONS: {
-            COLUMNS: [`${datasetId}_id`, "overallavg"],
-            ORDER: {
-                dir: "DOWN",
-                keys: ["overallavg"]
-            }
-        },
-        TRANSFORMATIONS: {
-            GROUP: [`${datasetId}_id`],
-            APPLY: [
-                {
-                    "overallavg": {
-                        AVG: `${datasetId}_avg`
-                    }
-                }
-            ]
-        }
-    };
 
-    if (department) {
-        query.WHERE = {
-			IS: {
-			  [`${datasetId}_dept`] : `${department}`
-			}
-		  };
-    }
-
-    return query;
-}
-
-async function fetchAllDatasetIds() {
-    const url = `${SERVER_URL}/datasets`;
-
-    try {
-        const response = await fetch(url);
-        if (response.ok) {
-            const result = await response.json();
-            return result.result.map((dataset) => dataset.id); // Extract only dataset IDs
-        } else {
-            throw new Error("Failed to fetch datasets.");
-        }
-    } catch (err) {
-        console.error("Error fetching dataset IDs:", err);
-        throw err;
-    }
-}
-
-// Fetch data and generate the chart
-async function generateChart(department) {
-    clearAllMessages();
-
-    try {
-        // Fetch all dataset IDs
-        const datasetIds = await fetchAllDatasetIds();
-        const combinedData = [];
-
-		//alert(JSON.stringify(datasetIds, null, 2));
-
-        // Query each dataset and combine results
-        for (const datasetId of datasetIds) {
-            const query = buildQueryForDataset(datasetId, department);
-            const response = await fetch(`${SERVER_URL}/query`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(query)
-            });
-
-			//alert(JSON.stringify(query, null, 2));
-
-            if (response.ok) {
-                const result = await response.json();
-                combinedData.push(...result.result);
-            } else {
-                const error = await response.text();
-                console.warn(`Error querying dataset ${datasetId}: ${error}`);
-            }
-        }
-        drawChart(combinedData, datasetIds);
-    } catch (err) {
-        document.getElementById("query-status").textContent = `Error: ${err.message}`;
-    }
-}
-
-// Draw the chart using Chart.js
-let chartInstance = null;
-
-function drawChart(data, datasetIds) {
-    const ctx = document.getElementById("course-chart").getContext("2d");
-
-    // Destroy previous chart instance if it exists
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
-
-    //const labels = data.map((entry) => entry.datasetId_id);
-	const labels = data.map((entry) => {
-        const datasetId = datasetIds.find((id) => `${id}_id` in entry);
-        return entry[`${datasetId}_id`];
-    });
-    const averages = data.map((entry) => entry.overallavg);
-
-    chartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Average Grade",
-                data: averages,
-                backgroundColor: "rgba(54, 162, 235, 0.6)",
-				fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: "Course ID"
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: "Average Grade"
-                    }
-                }
-            }
-        }
-    });
-}
-
-// Handle filter form submission
-document.getElementById("filter-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const department = document.getElementById("department").value.trim();
-    generateChart(department);
-});
-
-//USER STORY : Popularity over the year
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 1: POPULARITY OF COURSES OVER THE YEAR
 document.getElementById("enrollment-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const courseId = document.getElementById("course-id").value.trim();
 
-    // Validate Course ID
     if (!courseId) {
         document.getElementById("query-status").textContent = "Course ID is required.";
         return;
     }
 
-    // Clear previous messages and proceed with the chart generation
     document.getElementById("query-status").textContent = "";
     generateEnrollmentChart(courseId);
 });
@@ -279,11 +140,9 @@ async function generateEnrollmentChart(courseId, year) {
     clearAllMessages();
 
     try {
-        // Fetch all dataset IDs
         const datasetIds = await fetchAllDatasetIds();
         const combinedData = [];
 
-        // Query each dataset and combine results
         for (const datasetId of datasetIds) {
             const query = buildEnrollmentQuery(courseId, year, datasetId);
             console.log(`Query for ${datasetId}:`, JSON.stringify(query, null, 2));
@@ -300,7 +159,6 @@ async function generateEnrollmentChart(courseId, year) {
                 const result = await response.json();
                 console.log(`Response for ${datasetId}:`, result.result);
 
-                // Process each dataset's results and combine
                 combinedData.push(...result.result.map((entry) => ({ ...entry, datasetId })));
             } else {
                 const error = await response.text();
@@ -308,20 +166,17 @@ async function generateEnrollmentChart(courseId, year) {
             }
         }
 
-        // Handle no data found
         if (combinedData.length === 0) {
             document.getElementById("query-status").textContent = "No data found for the specified Course ID.";
             return;
         }
 
-        // Process combined data and draw the chart
         const processedData = processCombinedEnrollmentData(combinedData, datasetIds[0]);
         drawEnrollmentChart(processedData, datasetIds[0]);
     } catch (err) {
         document.getElementById("query-status").textContent = `Error: ${err.message}`;
     }
 }
-
 
 function processCombinedEnrollmentData(data, datasetId) {
     const enrollmentMap = {};
@@ -339,14 +194,12 @@ function processCombinedEnrollmentData(data, datasetId) {
             };
         }
 
-        // Sum the individual fields
         enrollmentMap[key].total_enrollment +=
             (entry.sumpass || 0) + (entry.sumfail || 0) + (entry.sumaudit || 0);
     });
 
-    return Object.values(enrollmentMap); // Convert map back to array
+    return Object.values(enrollmentMap);
 }
-
 
 function buildEnrollmentQuery(courseId, year, datasetId) {
     const query = {
@@ -404,7 +257,6 @@ function drawEnrollmentChart(data, datasetId) {
         enrollmentChartInstance.destroy();
     }
 
-    // Extract labels (years) and data (enrollment counts) dynamically
     const labels = data.map((entry) => entry.sections_year); // x-axis: years
     const enrollments = data.map((entry) => entry.total_enrollment); // y-axis: enrollment counts
 
@@ -442,7 +294,149 @@ function drawEnrollmentChart(data, datasetId) {
 }
 
 
-// USER STORY: Grade trends
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 2: DISPLAY AVERAGE GRADES BY COURSE
+
+function buildQueryForDataset(datasetId, department) {
+    const query = {
+        WHERE: {},
+        OPTIONS: {
+            COLUMNS: [`${datasetId}_id`, "overallavg"],
+            ORDER: {
+                dir: "DOWN",
+                keys: ["overallavg"]
+            }
+        },
+        TRANSFORMATIONS: {
+            GROUP: [`${datasetId}_id`],
+            APPLY: [
+                {
+                    "overallavg": {
+                        AVG: `${datasetId}_avg`
+                    }
+                }
+            ]
+        }
+    };
+
+    if (department) {
+        query.WHERE = {
+			IS: {
+			  [`${datasetId}_dept`] : `${department}`
+			}
+		  };
+    }
+
+    return query;
+}
+
+async function fetchAllDatasetIds() {
+    const url = `${SERVER_URL}/datasets`;
+
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            const result = await response.json();
+            return result.result.map((dataset) => dataset.id); // Extract only dataset IDs
+        } else {
+            throw new Error("Failed to fetch datasets.");
+        }
+    } catch (err) {
+        console.error("Error fetching dataset IDs:", err);
+        throw err;
+    }
+}
+
+// Fetch data and generate the chart
+async function generateChart(department) {
+    clearAllMessages();
+
+    try {
+        const datasetIds = await fetchAllDatasetIds();
+        const combinedData = [];
+
+        for (const datasetId of datasetIds) {
+            const query = buildQueryForDataset(datasetId, department);
+            const response = await fetch(`${SERVER_URL}/query`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(query)
+            });
+
+			//alert(JSON.stringify(query, null, 2));
+
+            if (response.ok) {
+                const result = await response.json();
+                combinedData.push(...result.result);
+            } else {
+                const error = await response.text();
+                console.warn(`Error querying dataset ${datasetId}: ${error}`);
+            }
+        }
+        drawChart(combinedData, datasetIds);
+    } catch (err) {
+        document.getElementById("query-status").textContent = `Error: ${err.message}`;
+    }
+}
+
+let chartInstance = null;
+
+function drawChart(data, datasetIds) {
+    const ctx = document.getElementById("course-chart").getContext("2d");
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+	const labels = data.map((entry) => {
+        const datasetId = datasetIds.find((id) => `${id}_id` in entry);
+        return entry[`${datasetId}_id`];
+    });
+    const averages = data.map((entry) => entry.overallavg);
+
+    chartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Average Grade",
+                data: averages,
+                backgroundColor: "rgba(54, 162, 235, 0.6)",
+				fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Course ID"
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Average Grade"
+                    }
+                }
+            }
+        }
+    });
+}
+
+document.getElementById("filter-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const department = document.getElementById("department").value.trim();
+    generateChart(department);
+});
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 3: TRACK GRADE TRENDS OVER YEAR
 function buildGradeTrendsQuery(courseId, datasetId) {
     return {
         WHERE: {
@@ -528,28 +522,22 @@ async function generateGradeTrendsChart(courseId) {
     }
 }
 
-
-
 let gradeTrendsChartInstance = null;
 
 function drawGradeTrendsChart(data, datasetId) {
     const ctx = document.getElementById("grade-trends-chart").getContext("2d");
 
-    // Destroy the existing chart instance if it exists
     if (gradeTrendsChartInstance) {
         gradeTrendsChartInstance.destroy();
     }
 
-    // Extract labels (years) and data (average grades) dynamically
     const labels = [...new Set(data.map((entry) => entry[`${datasetId}_year`]))].sort(); // Unique, sorted years
     const averages = labels.map((year) => {
-        // Calculate average grade for each year
         const yearData = data.filter((entry) => entry[`${datasetId}_year`] === year);
         const total = yearData.reduce((sum, entry) => sum + entry.avggrade, 0);
         return total / yearData.length;
     });
 
-    // Create a new chart instance
     gradeTrendsChartInstance = new Chart(ctx, {
         type: "line",
         data: {
@@ -583,14 +571,13 @@ function drawGradeTrendsChart(data, datasetId) {
     });
 }
 
-// USER STORY: PROFESSOR GRADE OVERVIEW ///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 4: PROFESSOR GRADE OVERVIEW
 document.getElementById("professor-search-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-
     const professorName = document.getElementById("professor-name").value.trim();
     if (!professorName) return alert("Please enter a professor's name.");
-
 
     try {
         // Fetch all dataset IDs
@@ -618,15 +605,12 @@ document.getElementById("professor-search-form").addEventListener("submit", asyn
             }
         }
 
-
-        // Display the results
         displayProfessorResults(combinedData, datasetIds);
     } catch (err) {
         alert(`Error: ${err.message}`);
     }
  });
 
-// USER STORY: PROFESSOR GRADE OVERVIEW ///////////////////////////////////////////////////////////////////////////////////////
  function buildProfessorQuery(professorName, datasetId) {
     return {
         WHERE: {
@@ -685,8 +669,8 @@ document.getElementById("professor-search-form").addEventListener("submit", asyn
 });
 
 
-
-// USER STORY: Low Average Course ///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 5: LOW AVERAGE COURSE
 document.getElementById("course-filter-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -760,7 +744,7 @@ function buildCourseFilterQuery(department, gradeThreshold, datasetId) {
 
 function displayFilterResults(data, datasetIds) {
     const resultsBody = document.getElementById("filter-results-body");
-    resultsBody.innerHTML = ""; // Clear previous results
+    resultsBody.innerHTML = "";
 
     if (data.length === 0) {
         const tr = document.createElement("tr");
@@ -790,36 +774,28 @@ document.getElementById("clear-filter-table-btn").addEventListener("click", () =
 });
 
 
-
-// USER STORY: View Course Pass/Fail Trends by Year ///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 6: VIEW COURSE PASS/FAIL TRENDS BY YEAR
 document.getElementById("pass-fail-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-
     const courseName = document.getElementById("course-name").value.trim();
 
-
-    // Validate Course Name
     if (!courseName) {
         document.getElementById("query-status").textContent = "Course name is required.";
         return;
     }
 
-
-    // Clear previous messages and fetch data
     document.getElementById("query-status").textContent = "";
     generatePassFailChart(courseName);
 });
 
-
 async function generatePassFailChart(courseName) {
     clearAllMessages();
-
 
     try {
         const datasetIds = await fetchAllDatasetIds();
         const combinedData = [];
-
 
         for (const datasetId of datasetIds) {
             const query = buildPassFailQuery(courseName, datasetId);
@@ -831,7 +807,6 @@ async function generatePassFailChart(courseName) {
                 body: JSON.stringify(query)
             });
 
-
             if (response.ok) {
                 const result = await response.json();
                 combinedData.push(...result.result.map((entry) => ({ ...entry, datasetId })));
@@ -841,14 +816,11 @@ async function generatePassFailChart(courseName) {
             }
         }
 
-
         if (combinedData.length === 0) {
             document.getElementById("query-status").textContent = "No data found for the specified course.";
             return;
         }
 
-
-        // Pass the first dataset ID for dynamic field names
         drawPassFailChart(combinedData, datasetIds[0]);
     } catch (err) {
         document.getElementById("query-status").textContent = `Error: ${err.message}`;
@@ -882,26 +854,19 @@ function buildPassFailQuery(courseName, datasetId) {
     };
 }
 
-
 let passFailChartInstance = null;
 
 function drawPassFailChart(data, datasetId) {
     const ctx = document.getElementById("pass-fail-chart").getContext("2d");
 
-
-    // Destroy the existing chart instance if it exists
     if (passFailChartInstance) {
         passFailChartInstance.destroy();
     }
 
+    const labels = data.map((entry) => entry[`${datasetId}_year`]);
+    const passCounts = data.map((entry) => entry.totalpass);
+    const failCounts = data.map((entry) => entry.totalfail);
 
-    // Dynamically extract labels and data
-    const labels = data.map((entry) => entry[`${datasetId}_year`]); // x-axis: years
-    const passCounts = data.map((entry) => entry.totalpass); // Pass data
-    const failCounts = data.map((entry) => entry.totalfail); // Fail data
-
-
-    // Create a new chart instance
     passFailChartInstance = new Chart(ctx, {
         type: "bar",
         data: {
@@ -939,6 +904,489 @@ function drawPassFailChart(data, datasetId) {
         }
     });
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 7: STUDENT'S COURSE OF INTEREST
+document.getElementById("audit-count-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const datasetId = document.getElementById("audit-dataset-id").value.trim();
+    const courseId = document.getElementById("audit-course-id").value.trim();
+
+	const datasetIds = await fetchAllDatasetIds();
+    if (!datasetId || !datasetIds.includes(datasetId)) {
+        document.getElementById("audit-query-status").textContent = "Invalid datacourse";
+		auditChartInstance.destroy();
+        return;
+    }
+
+    document.getElementById("audit-query-status").textContent = "";
+    generateAuditBarChart(datasetId, courseId);
+});
+
+async function generateAuditBarChart(datasetId, courseId) {
+    clearAllMessages();
+
+    try {
+        const query = buildAuditQuery(datasetId, courseId);
+
+        const response = await fetch(`${SERVER_URL}/query`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(query)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.result.length === 0) {
+                document.getElementById("audit-query-status").textContent = "No data found for the specified course.";
+                return;
+            }
+
+            drawAuditBarChart(result.result, datasetId);
+        } else {
+            const error = await response.text();
+            document.getElementById("audit-query-status").textContent = `Error: ${error}`;
+        }
+    } catch (err) {
+        document.getElementById("audit-query-status").textContent = `Error: ${err.message}`;
+    }
+}
+
+function buildAuditQuery(datasetId, courseId) {
+    const query = {
+		WHERE: {
+			IS: { [`${datasetId}_id`]: courseId }
+		},
+		OPTIONS: {
+			COLUMNS: [
+				`${datasetId}_id`,
+                `${datasetId}_year`,
+				"avgaudit"
+			],
+			ORDER: {
+				dir: "UP",
+				keys: [`${datasetId}_year`]
+			}
+		},
+		TRANSFORMATIONS: {
+			GROUP: [`${datasetId}_id`, `${datasetId}_year`],
+			APPLY: [
+				{ avgaudit: { AVG: `${datasetId}_audit` } }
+			]
+		}
+	};
+
+    return query;
+}
+
+let auditChartInstance = null;
+
+function drawAuditBarChart(data, datasetId) {
+    const ctx = document.getElementById("audit-bar-chart").getContext("2d");
+
+    if (auditChartInstance) {
+        auditChartInstance.destroy();
+    }
+
+    const labels = data.map((entry) => entry[`${datasetId}_year`]);
+    const auditCounts = data.map((entry) => entry.avgaudit);
+
+    auditChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Average Audit Count",
+                data: auditCounts,
+                backgroundColor: "rgba(75, 192, 192, 0.6)"
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Course ID"
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Average Audit Count"
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const year = labels[context.dataIndex];
+                            return `Year: ${year}, Audits: ${context.raw}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 8: COURSE MAJOR DIFFICULTY
+document.getElementById("department-analysis-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const datasetId = document.getElementById("avg-pass-dataset-id").value.trim();
+    const startYear = parseInt(document.getElementById("start-year").value);
+    const endYear = parseInt(document.getElementById("end-year").value);
+
+	const datasetIds = await fetchAllDatasetIds();
+    if (!datasetId || !datasetIds.includes(datasetId) || isNaN(startYear) || isNaN(endYear)) {
+        document.getElementById("major-query-status").textContent = "Invalid datacourse";
+		window.scatterChart.destroy();
+        return;
+    }
+
+    try {
+        const query = buildDepartmentAnalysisQuery(datasetId, startYear, endYear);
+        const response = await fetch(`${SERVER_URL}/query`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(query),
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            drawScatterPlot(result.result, datasetId);
+        } else {
+            console.error("Error querying dataset:", await response.text());
+        }
+    } catch (err) {
+        console.error("Error:", err.message);
+    }
+});
+
+function buildDepartmentAnalysisQuery(datasetId, startYear, endYear) {
+    return {
+        WHERE: {
+            AND: [
+                { GT: { [`${datasetId}_year`]: startYear } },
+                { LT: { [`${datasetId}_year`]: endYear} }
+            ]
+        },
+        OPTIONS: {
+            COLUMNS: [
+                `${datasetId}_dept`,
+                "averageGrade",
+                "totalPass",
+                "totalFail",
+                "totalAudit"
+            ],
+            ORDER: {
+                dir: "UP",
+                keys: [`${datasetId}_dept`]
+            }
+        },
+        TRANSFORMATIONS: {
+            GROUP: [`${datasetId}_dept`],
+            APPLY: [
+                {
+                    averageGrade: {
+                        AVG: `${datasetId}_avg`
+                    }
+                },
+                {
+                    totalPass: {
+                        SUM: `${datasetId}_pass`
+                    }
+                },
+                {
+                    totalFail: {
+                        SUM: `${datasetId}_fail`
+                    }
+                },
+                {
+                    totalAudit: {
+                        SUM: `${datasetId}_audit`
+                    }
+                }
+            ]
+        }
+    };
+}
+
+function drawScatterPlot(data, datasetId) {
+    const ctx = document.getElementById("department-scatter-plot").getContext("2d");
+
+    const scatterData = data.map((entry) => {
+        const totalStudents = entry.totalPass + entry.totalFail + entry.totalAudit;
+        const passRate = totalStudents > 0 ? (entry.totalPass / totalStudents) * 100 : 0; // Convert to percentage
+        return {
+            x: passRate,
+            y: entry.averageGrade,
+            label: entry[`${datasetId}_dept`] || "Unknown Department",
+        };
+    });
+
+    const labels = data.map((entry) => entry[`${datasetId}_dept`]);
+
+    console.log(JSON.stringify(data, null, 2));
+
+    const colors = scatterData.map(() => `hsl(${Math.random() * 360}, 100%, 50%)`);
+
+    if (window.scatterChart) {
+        window.scatterChart.destroy();
+    }
+
+    window.scatterChart = new Chart(ctx, {
+        type: "scatter",
+        data: {
+            datasets: scatterData.map((point, index) => ({
+                label: point.label,
+                data: [{ x: point.x, y: point.y }],
+                backgroundColor: colors[index],
+            })),
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const dept = labels[context.dataIndex];
+                            const { x, y } = context.raw;
+                            return `Dept: ${dept}, Pass Rate: ${x.toFixed(2)}%, Avg Grade: ${y.toFixed(2)}`;
+                        },
+                    },
+                },
+                legend: {
+                    display: false,
+                },
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Pass Rate (%)",
+                    },
+                    min: 0,
+                    max: 100,
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: "Average Grade",
+                    },
+                },
+            },
+        },
+    });
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// USER STORY 9: RETRIEVE COURSE STATISTICS
+document.getElementById("course-stats-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const datasetId = document.getElementById("stats-dataset-id").value.trim();
+    const courseId = document.getElementById("stats-course-id").value.trim();
+    const specificGrade = parseFloat(document.getElementById("specific-grade").value);
+    const yearRange = document.getElementById("stats-year-range").value.trim();
+
+    // Validate inputs
+    if (!datasetId || isNaN(specificGrade)) {
+        document.getElementById("stats-query-status").textContent = "Dataset ID and Specific Grade are required.";
+        if (statsChartInstance) statsChartInstance.destroy();
+        return;
+    }
+
+    document.getElementById("stats-query-status").textContent = "";
+    await generateStatsBoxplot(datasetId, courseId, specificGrade, yearRange);
+});
+
+async function generateStatsBoxplot(datasetId, courseId, specificGrade, yearRange) {
+    try {
+        const query = buildStatsQuery(datasetId, courseId, yearRange);
+        console.log("Generated Query:", JSON.stringify(query, null, 2));
+
+        const response = await fetch(`${SERVER_URL}/query`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(query)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+
+            if (!result.result.length) {
+                document.getElementById("stats-query-status").textContent = "No data found for the specified course and year range.";
+                return;
+            }
+
+            const processedStats = processRawGrades(result.result, datasetId);
+            drawStatsBoxplot(processedStats, specificGrade);
+        } else {
+            const error = await response.text();
+            document.getElementById("stats-query-status").textContent = `Error: ${error}`;
+            if (statsChartInstance) statsChartInstance.destroy();
+        }
+    } catch (err) {
+        document.getElementById("stats-query-status").textContent = `Error: ${err.message}`;
+        if (statsChartInstance) statsChartInstance.destroy();
+    }
+}
+
+function buildStatsQuery(datasetId, courseId, yearRange) {
+    const query = {
+        WHERE: {
+            AND: []
+        },
+        OPTIONS: {
+            COLUMNS: [`${datasetId}_id`, `${datasetId}_avg`, `${datasetId}_year`],
+            ORDER: {
+                dir: "UP",
+                keys: [`${datasetId}_avg`]
+            }
+        }
+    };
+
+    if (courseId) {
+        query.WHERE.AND.push({
+            IS: { [`${datasetId}_id`]: courseId }
+        });
+    }
+
+    if (yearRange) {
+        const [startYear, endYear] = yearRange.split("-").map(Number);
+        if (startYear && endYear && startYear <= endYear) {
+            query.WHERE.AND.push({
+                AND: [
+                    { GT: { [`${datasetId}_year`]: startYear } },
+                    { LT: { [`${datasetId}_year`]: endYear } }
+                ]
+            });
+        } else {
+            document.getElementById("stats-query-status").textContent = "Invalid year range format. Use YYYY-YYYY.";
+            return null;
+        }
+    }
+
+    if (!courseId && !yearRange) {
+        query.WHERE = {};
+    }
+
+    return query;
+}
+
+function processRawGrades(data, datasetId) {
+    const grades = data.map((entry) => entry[`${datasetId}_avg`]);
+
+    const count = grades.length;
+    const sum = grades.reduce((acc, grade) => acc + grade, 0);
+    const min = Math.min(...grades);
+    const max = Math.max(...grades);
+    const mean = sum / count;
+
+    // Variance calculation: Σ((x_i - mean)^2) / count
+    const variance = grades.reduce((acc, grade) => acc + Math.pow(grade - mean, 2), 0) / count;
+
+    // Standard deviation
+    const stddev = Math.sqrt(variance);
+
+    return { min, max, mean, variance, stddev, count };
+}
+
+let statsChartInstance = null;
+
+function drawStatsBoxplot(stats, specificGrade) {
+    const ctx = document.getElementById("stats-boxplot").getContext("2d");
+
+    if (statsChartInstance) {
+        statsChartInstance.destroy();
+    }
+
+    statsChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["Statistics"], // Single label for grouped statistics
+            datasets: [
+                {
+                    label: "Min",
+                    data: [stats.min],
+                    backgroundColor: "rgba(255, 99, 132, 0.6)"
+                },
+                {
+                    label: "Max",
+                    data: [stats.max],
+                    backgroundColor: "rgba(54, 162, 235, 0.6)"
+                },
+                {
+                    label: "Mean",
+                    data: [stats.mean],
+                    backgroundColor: "rgba(75, 192, 192, 0.6)"
+                },
+                {
+                    label: "Standard Deviation",
+                    data: [stats.stddev],
+                    backgroundColor: "rgba(255, 206, 86, 0.6)"
+                },
+                {
+                    label: "Variance",
+                    data: [stats.variance],
+                    backgroundColor: "rgba(153, 102, 255, 0.6)"
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Metrics"
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Grade Values"
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `${context.dataset.label}: ${context.raw.toFixed(2)}`
+                    }
+                }
+            }
+        }
+    });
+
+    calculateProbability(stats.mean, stats.stddev, specificGrade);
+}
+
+function calculateProbability(mean, stddev, specificGrade) {
+    const distance = Math.abs(mean - specificGrade);
+    const k = distance / stddev;
+    const probability = k >= 1 ? Math.min(1, 1 - 1 / (k * k)) : 0;
+
+    alert(`Probability of achieving a score above ${specificGrade}: ${(probability * 100).toFixed(2)}%`);
+}
+
+
+
+
 
 
 

@@ -1,3 +1,8 @@
+<!-- Citation:
+	To get the syntax for implementation we use CHATGPT.
+	OpenAI. (2024). Assistance with JavaScript and Query Implementation for Dataset Analysis. Retrieved from ChatGPT by OpenAI.
+	-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,7 +58,7 @@
             <h2>Enrollment Trends</h2>
             <form id="enrollment-form">
                 <label for="course-id">Course ID:</label>
-                <input type="text" id="course-id" name="course-id" placeholder="e.g., CPSC110" required>
+                <input type="text" id="course-id" name="course-id" placeholder="e.g., 180" required>
 
                 <button type="submit" class="button">Generate Chart</button>
             </form>
@@ -65,7 +70,7 @@
 			<h2>View Course Averages</h2>
 			<form id="filter-form">
 				<label for="department">Department (optional):</label>
-				<input type="text" id="department" name="department" placeholder="e.g., CPSC">
+				<input type="text" id="department" name="department" placeholder="e.g., cpsc">
 				<button id="generate-chart" class="button" type="submit">Generate Chart</button>
 			</form>
 			<p id="query-status"></p>
@@ -78,7 +83,7 @@
             <h2>Grade Trends</h2>
             <form id="grade-trends-form">
                 <label for="grade-course-id">Course ID:</label>
-                <input type="text" id="grade-course-id" name="grade-course-id" placeholder="e.g., CPSC110" required>
+                <input type="text" id="grade-course-id" name="grade-course-id" placeholder="e.g., 180" required>
                 <button type="submit" class="button">Generate Chart</button>
             </form>
             <p id="grade-query-status"></p>
@@ -111,7 +116,7 @@
 			<h2>Filter Challenging Courses</h2>
 			<form id="course-filter-form">
 				<label for="department-filter">Department:</label>
-				<input type="text" id="department-filter" placeholder="Enter department (e.g., CPSC)" required />
+				<input type="text" id="department-filter" placeholder="Enter department (e.g., cpsc)" required />
 
 				<label for="grade-threshold">Maximum Average Grade:</label>
 				<input type="number" id="grade-threshold" placeholder="Enter grade threshold (e.g., 70)" required />
@@ -140,14 +145,66 @@
             <h2>Pass/Fail Trends</h2>
             <form id="pass-fail-form">
                 <label for="course-name">Course Name:</label>
-                <input type="text" id="course-name" name="course-name" placeholder="e.g., CPSC110" required>
+                <input type="text" id="course-name" name="course-name" placeholder="e.g., 180" required>
                 <button type="submit" class="button">View Trends</button>
             </form>
             <p id="query-status"></p>
             <canvas id="pass-fail-chart" width="800" height="400"></canvas>
         </section>
 
+        <section>
+            <h2>Highest Audit Counts</h2>
+            <form id="audit-count-form">
+                <label for="audit-dataset-id">Dataset ID:</label>
+                <input type="text" id="audit-dataset-id" name="audit-dataset-id" placeholder="e.g., sections" required>
 
+                <label for="audit-course-id">Course ID:</label>
+                <input type="text" id="audit-course-id" name="audit-course-id" placeholder="e.g., 180" required>
+
+                <button type="submit" class="button">View Results</button>
+            </form>
+            <p id="audit-query-status"></p>
+            <canvas id="audit-bar-chart" width="800" height="400"></canvas>
+        </section>
+
+		<section>
+			<h2>Analyze Departments by Average Grade and Pass Rate</h2>
+			<form id="department-analysis-form">
+				<label for="dataset-select">Dataset ID:</label>
+				<input type="text" id="avg-pass-dataset-id" name="avg-pass-dataset-id" placeholder="e.g., sections" required>
+
+				<label for="start-year">Start Year:</label>
+				<input type="number" id="start-year" placeholder="e.g., 2015" required />
+
+				<label for="end-year">End Year:</label>
+				<input type="number" id="end-year" placeholder="e.g., 2023" required />
+
+				<button type="submit" class="button">Generate Scatter Plot</button>
+			</form>
+			<p id="major-query-status"></p>
+			<canvas id="department-scatter-plot" width="800" height="400"></canvas>
+		</section>
+
+		<section>
+            <h2>Course Performance Statistics</h2>
+            <form id="course-stats-form">
+                <label for="stats-dataset-id">Dataset ID:</label>
+                <input type="text" id="stats-dataset-id" name="stats-dataset-id" placeholder="e.g., sections" required>
+
+                <label for="stats-course-id">Course ID:</label>
+                <input type="text" id="stats-course-id" name="stats-course-id" placeholder="e.g., 180">
+
+                <label for="stats-year-range">Year Range (Optional):</label>
+                <input type="text" id="stats-year-range" name="stats-year-range" placeholder="e.g., 2015-2021">
+
+                <label for="specific-grade">Specific Grade for Probability:</label>
+                <input type="number" id="specific-grade" name="specific-grade" placeholder="e.g., 85">
+
+                <button type="submit" class="button">Retrieve Statistics</button>
+            </form>
+            <p id="stats-query-status"></p>
+            <canvas id="stats-boxplot" width="800" height="400"></canvas>
+        </section>
 
         <button id="scroll-to-top-btn" class="scroll-to-top-btn" onclick="scrollToTop()">&#9650;</button>
 
@@ -155,7 +212,7 @@
     </main>
 
     <footer>
-        <p>&copy; Team Kodok</p>
+        <p> Project CPSC 310 Team 139</p>
     </footer>
 
     <script type="text/javascript" src="/frontend.js"></script>
