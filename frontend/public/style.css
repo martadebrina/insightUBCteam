@@ -1,3 +1,7 @@
+/* Citation:
+To get the syntax for implementation we use CHATGPT.
+OpenAI. (2024). Assistance with JavaScript and Query Implementation for Dataset Analysis. Retrieved from ChatGPT by OpenAI.  */
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -117,4 +121,22 @@ table tr:hover {
 
 .scroll-to-top-btn:hover {
     background-color: #0056b3;
+}
+
+section {
+    margin: 20px;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+canvas {
+    border: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+#stats-query-status {
+    color: red;
+    margin-top: 10px;
 }
