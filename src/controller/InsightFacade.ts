@@ -276,7 +276,9 @@ export default class InsightFacade implements IInsightFacade {
 			return;
 		}
 
-		const datasetArray: [string, Datasets][] = await fs.readJSON("./data/Datasets.json");
+		const res = await fs.readJSON("./data/Datasets.json");
+		// console.log(JSON.stringify(res));
+		const datasetArray: [string, Datasets][] = res;
 
 		for (const [id, dataset] of datasetArray) {
 			if (this.datasets.has(id)) {
@@ -286,10 +288,13 @@ export default class InsightFacade implements IInsightFacade {
 			if (dataset.kind === InsightDatasetKind.Sections) {
 				newData.sections = dataset.sections.map((section: any) => {
 					//console.log(section.id);
-					return new Section(section);
+					// console.log(JSON.stringify(section));
+					// const s = new Section(section);
+					// console.log(JSON.stringify(section as Section));
+					return new Section(section, false);
 				});
 			} else if (dataset.kind === InsightDatasetKind.Rooms) {
-				newData.rooms = dataset.sections.map((rooms: any) => {
+				newData.rooms = dataset.rooms.map((rooms: any) => {
 					return new Room(rooms);
 				});
 			}
@@ -299,6 +304,14 @@ export default class InsightFacade implements IInsightFacade {
 
 			//console.log(newData);
 		}
+		// console.log(this.datasets);
+		// console.log((this.datasets as any).get("sections").sections[0] instanceof Section);
+		// console.log((this.datasets as any).get("sections").sections[0]);
+		// const arr = [...this.datasets.entries()];
+		// const str = arr.reduce((acc, cur) => {
+		// 	return acc + cur[0] + JSON.stringify(cur[1]);
+		// }, "");
+		// console.log(str);
 	}
 
 	private async parseZipFile(id: string, zip: JSZip, datasets: Map<string, Datasets>): Promise<void> {

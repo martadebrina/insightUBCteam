@@ -36,27 +36,40 @@ export class Section {
 	public fail: number;
 	public audit: number;
 
-	constructor(section: any) {
+	constructor(section: any, isRaw = true) {
 		// check if section is valid
 		if (!this.isValidSection(section)) {
 			throw new InsightError("Undefined variable -> invalid section");
 		}
 		try {
-			this.uuid = String(section.id);
-			this.id = String(section.Course);
-			this.title = String(section.Title);
-			this.instructor = String(section.Professor);
-			this.dept = String(section.Subject);
-			if (section.Section === "overall") {
-				this.year = 1900;
-			} else {
-				this.year = this.anyToNum(section.Year);
-			}
+			if (isRaw) {
+				this.uuid = String(section.id);
+				this.id = String(section.Course);
+				this.title = String(section.Title);
+				this.instructor = String(section.Professor);
+				this.dept = String(section.Subject);
+				if (section.Section === "overall") {
+					this.year = 1900;
+				} else {
+					this.year = this.anyToNum(section.Year);
+				}
 
-			this.avg = this.anyToNum(section.Avg);
-			this.pass = this.anyToNum(section.Pass);
-			this.fail = this.anyToNum(section.Fail);
-			this.audit = this.anyToNum(section.Audit);
+				this.avg = this.anyToNum(section.Avg);
+				this.pass = this.anyToNum(section.Pass);
+				this.fail = this.anyToNum(section.Fail);
+				this.audit = this.anyToNum(section.Audit);
+			} else {
+				this.uuid = section.uuid;
+				this.id = section.id;
+				this.title = section.title;
+				this.instructor = section.instructor;
+				this.dept = section.dept;
+				this.year = section.year;
+				this.avg = section.avg;
+				this.pass = section.pass;
+				this.fail = section.fail;
+				this.audit = section.audit;
+			}
 		} catch (_err) {
 			throw new InsightError("invalid variable type");
 		}
